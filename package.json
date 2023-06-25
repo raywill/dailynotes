@@ -1,0 +1,16 @@
+{
+  "name": "DailyNotes",
+  "version": "1.0.1",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "package": "electron-packager ./ --platform=darwin --arch=x64 --out=dist --icon=./icon.icns --overwrite --electron-version=25.1.0 --electron-zip-dir=/Users/raywill/.electron/ && asar pack dist/DailyNotes-darwin-x64/DailyNotes.app/Contents/Resources/app dist/DailyNotes-darwin-x64/DailyNotes.app/Contents/Resources/app.asar && rm -fr dist/DailyNotes-darwin-x64/DailyNotes.app/Contents/Resources/app",
+    "zip": "zip -r dist/DailyNotes-darwin-x64.zip dist/DailyNotes-darwin-x64",
+    "src": "open dist/DailyNotes-darwin-x64/DailyNotes.app/Contents/Resources/",
+    "dest": "open /Applications/DailyNotes.app/Contents/Resources/"
+  },
+  "dependencies": {
+    "asar": "^3.2.0",
+    "electron-packager": "^17.1.1"
+  }
+}
