@@ -7,6 +7,7 @@ let win = null;
 app.allowRendererProcessReuse = true
 
 var dirName = path.join(app.getPath("documents"), "DailyNotes");
+var tempDirName = app.getPath("temp");
 
 function getCurrentDate() {
   const date = new Date();
@@ -17,42 +18,161 @@ function getCurrentDate() {
 }
 
 
-var fn = function() {
-          var fName = getCurrentDate() + ".txt";
-          var fileName = path.join(dirName, fName);
-          fs.exists(dirName, exists => {
-            if (!exists) {
-              fs.mkdirSync(dirName);
-            } else {
-              fs.access(fileName,fs.constants.F_OK, err => {
-                if (err) {
-                    fs.writeFile(fileName, '', 'utf8', err => {
-                        if (err) {
-                            console.warn('创建文件失败');
-                        } else {
-                            console.warn('创建文件成功');
-										        shell.openPath(fileName);
-                        }
-                    });
-                } else {
-                    console.log('文件存在');
-										shell.openPath(fileName);
-								}
-            }); 
+function getDeltaDate(delta) {
+  var date = new Date();
+  date.setDate(date.getDate() + delta);
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+var openDailyFile = function() {
+    var fName = getCurrentDate() + ".txt";
+    var fileName = path.join(dirName, fName);
+    fs.exists(dirName, exists => {
+      if (!exists) {
+        fs.mkdirSync(dirName);
+      } else {
+        fs.access(fileName,fs.constants.F_OK, err => {
+          if (err) {
+              fs.writeFile(fileName, '', 'utf8', err => {
+                  if (err) {
+                      console.warn('创建文件失败');
+                  } else {
+                      console.warn('创建文件成功');
+                      shell.openPath(fileName);
+                  }
+              });
+          } else {
+              console.log('文件存在');
+              shell.openPath(fileName);
           }
-        });
-      };
+      }); 
+    }
+  });
+};
+
+var writeAndOpenReportFile = function(fNamePrefix, content) {
+    var fName = fNamePrefix + ".md";
+    var fileName = path.join(tempDirName, fName);
+    fs.exists(tempDirName, exists => {
+      if (!exists) {
+        console.warn("找不到临时文件夹");
+      } else {
+        fs.access(fileName,fs.constants.F_OK, err => {
+            fs.writeFile(fileName, content, 'utf8', err => {
+                if (err) {
+                    console.warn('创建报告文件失败');
+                } else {
+                    console.warn('写入报告文件成功');
+                    shell.openPath(fileName);
+                }
+            });
+      }); 
+    }
+  });
+};
+
+
+var readFile = function(fileName, cb) {
+    fs.readFile(fileName, 'utf8', (err, data) => {
+        if (err) {
+            console.warn('创建文件失败');
+        } else {
+          cb(data);
+        }
+    });
+};
+
+var getContent = function(type, cb) {
+  readFile(fileName, function(data) {
+    cb(data);
+  });
+}
+
+var generateReport = function(type, delta) {
+  var results = "";
+  let offset = 0 - delta;
+  for (var i = offset; i <= 0; ++i) {
+    var date = getDeltaDate(i)
+    var fName =  date + ".txt";
+    var fileName = path.join(dirName, fName);
+    try {
+      var content = fs.readFileSync(fileName, 'utf8');
+      var regex = new RegExp("#" + type + "([\\s\\S]*?)(?=#|$)", "g");
+      let match;
+      let matched = false;
+      let dayResults = "";
+      while ((match = regex.exec(content)) !== null) {
+        console.log(match);
+        dayResults += "## " + type + " " + match[1].trim() + "\n\n";
+        matched = true;
+      }
+      if (matched) {
+        results += "# " + date + "\n\n" + dayResults + "\n\n"; 
+      }
+    } catch {
+      // file may not exist
+    }
+  }
+  let fNamePrefix = "report"; //type + "-" + delta.toString();
+  writeAndOpenReportFile(fNamePrefix, results);
+};
+
+var initMenu = function(appIcon) {
+  Menu.setApplicationMenu(Menu.buildFromTemplate([{label: 'Quit', selector: 'terminate:', }]))
+  var contextMenu = Menu.buildFromTemplate([
+    {
+      label: '#todo weekly',
+      accelerator: 'Command+M',
+      click: function() {
+        generateReport("todo", 7);
+      }
+    },
+    {
+      label: '#todo monthly',
+      accelerator: 'Command+W',
+      click: function() {
+        generateReport("todo", 30);
+      }
+    },
+    {
+      label: '#note weekly',
+      accelerator: 'Command+N',
+      click: function() {
+        generateReport("note", 7);
+      }
+    },
+    {
+      label: '#note monthly',
+      accelerator: 'Command+O',
+      click: function() {
+        generateReport("note", 30);
+      }
+    },
+    { type: 'separator' },
+    {
+      label: 'open directory',
+      accelerator: 'Command+D',
+      click: function() {
+        shell.openPath(dirName);
+      }
+    }
+  ]);
+  appIcon.setContextMenu(contextMenu);
+};
 
 app.on('ready', function(){
   appIcon = new Tray(iconPath);
   appIcon.setToolTip("日志保存路径：" + dirName);
-  appIcon.on('click', fn); 
-  fn();
+  initMenu(appIcon);
+  appIcon.on('click', openDailyFile); 
+  openDailyFile();
 });
 
 
-
-app.on('activate', fn);
+app.on('activate', openDailyFile);
 
 app.on('window-all-cloased', () => {
   if (process.platform !== 'drawin') {
