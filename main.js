@@ -7,6 +7,7 @@ let win = null;
 app.allowRendererProcessReuse = true
 
 var dirName = path.join(app.getPath("documents"), "DailyNotes");
+var configName = path.join(app.getPath('userData'), 'config.json');
 var tempDirName = app.getPath("temp");
 
 function getCurrentDate() {
@@ -92,6 +93,7 @@ var getContent = function(type, cb) {
 }
 
 var generateReport = function(type, delta) {
+  // console.warn(type, delta);
   var results = "";
   let offset = 0 - delta;
   for (var i = offset; i <= 0; ++i) {
@@ -100,12 +102,12 @@ var generateReport = function(type, delta) {
     var fileName = path.join(dirName, fName);
     try {
       var content = fs.readFileSync(fileName, 'utf8');
-      var regex = new RegExp("#" + type + "([\\s\\S]*?)(?=#|$)", "g");
+      var regex = new RegExp("#+" + type + "([\\s\\S]*?)(?=#|$)", "g");
       let match;
       let matched = false;
       let dayResults = "";
       while ((match = regex.exec(content)) !== null) {
-        console.log(match);
+        //console.log(match);
         dayResults += "## " + type + " " + match[1].trim() + "\n\n";
         matched = true;
       }
@@ -120,38 +122,68 @@ var generateReport = function(type, delta) {
   writeAndOpenReportFile(fNamePrefix, results);
 };
 
+var parseLabels = function(labels) {
+  var menuArr = [];
+  labels.split(',').forEach((item, index) => {
+    var parts = item.split(' '); 
+    if (parts.length < 2) return;
+    var tag = parts[0].replace(/^#+/, '');
+    var days = 0;
+    switch(parts[1]) {
+      case "weekly":
+        days = 7;
+        break;
+      case "monthly":
+        days = 30;
+        break;
+      default:
+        parts.shift();
+        if (parts.length == 1) {
+            days = parseInt(parts[0], 10);
+        } else {
+          switch(parts[1]) {
+            case "days":
+            case "day":
+              days = parseInt(parts[0], 10);
+              break;
+            case "month":
+            case "months":
+              days = 30 * parseInt(parts[0], 10);
+              break;
+            case "year":
+            case "years":
+              days = 365 * parseInt(parts[0], 10);
+              break;
+            default:
+              days = 7;
+              break;
+          }
+        }
+        break;
+    }
+    const menuItem = {label:item, click:function() { generateReport(tag, days); }};
+    menuArr.push(menuItem);
+  });
+  return menuArr;
+};
+
 var initMenu = function(appIcon) {
+  var labels = "";
+  try {
+    const config = JSON.parse(fs.readFileSync(configName));
+    if (config) {
+      labels = config.labels;
+    }
+  } catch {
+    const data = {}
+    labels = "#todo weekly,#todo monthly,#note weekly,#note monthly,#meeting 7 days";
+    data.labels =  labels;
+    fs.writeFileSync(configName, JSON.stringify(data, null, 2));
+  }
   Menu.setApplicationMenu(Menu.buildFromTemplate([{label: 'Quit', selector: 'terminate:', }]))
-  var contextMenu = Menu.buildFromTemplate([
-    {
-      label: '#todo weekly',
-      accelerator: 'Command+M',
-      click: function() {
-        generateReport("todo", 7);
-      }
-    },
-    {
-      label: '#todo monthly',
-      accelerator: 'Command+W',
-      click: function() {
-        generateReport("todo", 30);
-      }
-    },
-    {
-      label: '#note weekly',
-      accelerator: 'Command+N',
-      click: function() {
-        generateReport("note", 7);
-      }
-    },
-    {
-      label: '#note monthly',
-      accelerator: 'Command+O',
-      click: function() {
-        generateReport("note", 30);
-      }
-    },
-    { type: 'separator' },
+  var menuArr = parseLabels(labels);
+  menuArr.push({ type: 'separator' });
+  menuArr.push(
     {
       label: 'open directory',
       accelerator: 'Command+D',
@@ -159,7 +191,16 @@ var initMenu = function(appIcon) {
         shell.openPath(dirName);
       }
     }
-  ]);
+  );
+  menuArr.push(
+    {
+      label: 'config',
+      click: function() {
+        shell.openPath(configName);
+      }
+    }
+  );
+  var contextMenu = Menu.buildFromTemplate(menuArr);
   appIcon.setContextMenu(contextMenu);
 };
 
