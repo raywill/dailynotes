@@ -1,4 +1,6 @@
 # dailynotes
+![image](https://github.com/raywill/dailynotes/assets/248295/f1c22884-52b1-44b8-ad73-bf04b408aad6)
+
 Daily notes with  unlimited capability
 - Auto start a new note every data
 - Generate weekly & monthly report automatically for '#note' & '#todo' tags.
