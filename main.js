@@ -185,7 +185,7 @@ var initMenu = function(appIcon) {
   menuArr.push({ type: 'separator' });
   menuArr.push(
     {
-      label: 'open directory',
+      label: 'all notes',
       accelerator: 'Command+D',
       click: function() {
         shell.openPath(dirName);
@@ -195,6 +195,7 @@ var initMenu = function(appIcon) {
   menuArr.push(
     {
       label: 'config',
+      accelerator: 'Command+C',
       click: function() {
         shell.openPath(configName);
       }
