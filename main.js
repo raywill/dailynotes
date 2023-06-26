@@ -180,7 +180,6 @@ var initMenu = function(appIcon) {
     data.labels =  labels;
     fs.writeFileSync(configName, JSON.stringify(data, null, 2));
   }
-  Menu.setApplicationMenu(Menu.buildFromTemplate([{label: 'Quit', selector: 'terminate:', }]))
   var menuArr = parseLabels(labels);
   menuArr.push({ type: 'separator' });
   menuArr.push(
@@ -203,6 +202,11 @@ var initMenu = function(appIcon) {
   );
   var contextMenu = Menu.buildFromTemplate(menuArr);
   appIcon.setContextMenu(contextMenu);
+  //Menu.setApplicationMenu(Menu.buildFromTemplate([{label: 'Quit', selector: 'terminate:', }]))
+  //Menu.setApplicationMenu(contextMenu);
+  if (process.platform === 'darwin') {
+    app.dock.setMenu(contextMenu);
+  }
 };
 
 app.on('ready', function(){
