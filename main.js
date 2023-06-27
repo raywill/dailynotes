@@ -28,8 +28,7 @@ function getDeltaDate(delta) {
   return `${year}-${month}-${day}`;
 }
 
-var openDailyFile = function() {
-    var fName = getCurrentDate() + ".txt";
+var openTextFile = function(fName) {
     var fileName = path.join(dirName, fName);
     fs.exists(dirName, exists => {
       if (!exists) {
@@ -53,6 +52,17 @@ var openDailyFile = function() {
     }
   });
 };
+
+var openDailyFile = function() {
+    var fName = getCurrentDate() + ".txt";
+    openTextFile(fName);
+};
+
+var openDailyFileByDelta = function(delta) {
+    var fName = getDeltaDate(-1) + ".txt";
+    openTextFile(fName);
+};
+
 
 var writeAndOpenReportFile = function(fNamePrefix, content) {
     var fName = fNamePrefix + ".md";
@@ -181,6 +191,15 @@ var initMenu = function(appIcon) {
     fs.writeFileSync(configName, JSON.stringify(data, null, 2));
   }
   var menuArr = parseLabels(labels);
+  menuArr.push({ type: 'separator' });
+  menuArr.push(
+    {
+      label: 'yesterday',
+      click: function() {
+        openDailyFileByDelta(1);
+      }
+    }
+  );
   menuArr.push({ type: 'separator' });
   menuArr.push(
     {
