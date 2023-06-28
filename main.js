@@ -112,7 +112,7 @@ var generateReport = function(type, delta) {
     var fileName = path.join(dirName, fName);
     try {
       var content = fs.readFileSync(fileName, 'utf8');
-      var regex = new RegExp("#+" + type + "([\\s\\S]*?)(?=#|$)", "g");
+      var regex = new RegExp("#+" + type + "([\\s\\S]*?)(?=\n#|$)", "g");
       let match;
       let matched = false;
       let dayResults = "";
