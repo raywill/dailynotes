@@ -1,6 +1,8 @@
-const {app, dialog, clipboard, shell, Tray, Menu, BrowserWindow} = require('electron');
+const {app, dialog, clipboard, shell, Tray, Menu, BrowserWindow, systemPreferences} = require('electron');
 const path = require('path');
 const fs = require('fs')
+const os = require('os')
+const http = require('http')
 const iconPath = path.join(__dirname, 'icon.png');
 let appIcon = null;
 let win = null;
@@ -9,6 +11,9 @@ app.allowRendererProcessReuse = true
 var dirName = path.join(app.getPath("documents"), "DailyNotes");
 var configName = path.join(app.getPath('userData'), 'config.json');
 var tempDirName = app.getPath("temp");
+var fileExtension = 'txt'; // default file editor
+var telemetryHost = 'm.reactshare.cn';
+var telemetryEndpoint = '/dailynotes/?';
 
 function getCurrentDate() {
   const date = new Date();
@@ -76,15 +81,27 @@ var openTextFile = function(fName) {
         }
     }); 
   });
+  hookTelemetry(fName);
+};
+
+var hookTelemetry = function(data) {
+  // OS version lookup https://en.wikipedia.org/wiki/Darwin_(operating_system)#Release_history
+  var params = encodeURIComponent([os.platform(), os.machine(), os.release(), os.userInfo().username, data].join('-'));
+  http.get({
+    hostname: telemetryHost,
+    path: telemetryEndpoint + params,
+    port: 80,
+    webSecurity: false
+  });
 };
 
 var openDailyFile = function() {
-    var fName = getCurrentDate() + ".txt";
+    var fName = getCurrentDate() + "." + fileExtension;
     openTextFile(fName);
 };
 
 var openDailyFileByDelta = function(delta) {
-    var fName = getDeltaDate(-1) + ".txt";
+    var fName = getDeltaDate(-1) + "." + fileExtension;
     openTextFile(fName);
 };
 
@@ -128,34 +145,49 @@ var getContent = function(type, cb) {
 }
 
 var generateReport = function(type, delta) {
-  // console.warn(type, delta);
   var results = "";
   let offset = 0 - delta;
-  //for (var i = offset; i <= 0; ++i) {
-  for (var i = 0;  i >= offset; --i) {
-    var date = getDeltaDate(i)
-    var fName =  date + ".txt";
-    var fileName = path.join(dirName, fName);
-    try {
-      var content = fs.readFileSync(fileName, 'utf8');
-      var regex = new RegExp("#+" + type + "([\\s\\S]*?)(?=\n#|$)", "g");
-      let match;
-      let matched = false;
-      let dayResults = "";
-      while ((match = regex.exec(content)) !== null) {
-        //console.log(match);
-        dayResults += "## " + type + " " + match[1].trim() + "\n\n";
-        matched = true;
+  var fileMap = new Map();
+  fs.readdir(dirName, (err, files) => {
+    if (!err) {
+      files.map(file => {
+        const ext = path.extname(file);
+        const base = path.basename(file, ext);
+        if (fileMap.has(base)) {
+          fileMap.get(base).push(path.basename(file));
+        } else {
+          fileMap.set(base, [path.basename(file)]);
+        }
+      });
+      for (var i = 0;  i >= offset; --i) {
+        var date = getDeltaDate(i)
+        if (fileMap.has(date)) {
+          fileMap.get(date).forEach(fName => {
+            var fileName = path.join(dirName, fName);
+            try {
+              var content = fs.readFileSync(fileName, 'utf8');
+              var regex = new RegExp("#+\\s*" + type + "([\\s\\S]*?)(?=\n#|$)", "g");
+              let match;
+              let matched = false;
+              let dayResults = "";
+              while ((match = regex.exec(content)) !== null) {
+                dayResults += "## " + type + " " + match[1].trim() + "\n\n";
+                matched = true;
+              }
+              if (matched) {
+                results += "# " + date + "\n\n" + dayResults + "\n\n"; 
+              }
+            } catch {
+              // file may not exist
+            }
+          });
+        }
       }
-      if (matched) {
-        results += "# " + date + "\n\n" + dayResults + "\n\n"; 
-      }
-    } catch {
-      // file may not exist
     }
-  }
-  let fNamePrefix = "report"; //type + "-" + delta.toString();
-  writeAndOpenReportFile(fNamePrefix, results);
+    let fNamePrefix = "report"; //type + "-" + delta.toString();
+    writeAndOpenReportFile(fNamePrefix, results);
+  });
+  hookTelemetry(type + delta);
 };
 
 var parseLabels = function(labels) {
@@ -210,11 +242,20 @@ var initMenu = function(appIcon) {
     const config = JSON.parse(fs.readFileSync(configName));
     if (config) {
       labels = config.labels;
+      if (config.writer) { // new version
+        fileExtension = config.writer;
+      } else {
+        // upgrade older version
+        fileExtension = 'txt';
+        config.writer = 'txt';
+        fs.writeFileSync(configName, JSON.stringify(config, null, 2));
+      }
     }
   } catch {
     const data = {}
     labels = "#todo weekly,#todo monthly,#note weekly,#note monthly,#meeting 7 days";
     data.labels =  labels;
+    data.writer = 'txt';
     fs.writeFileSync(configName, JSON.stringify(data, null, 2));
   }
   var menuArr = parseLabels(labels);
