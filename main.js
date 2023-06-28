@@ -33,23 +33,26 @@ var openTextFile = function(fName) {
     fs.exists(dirName, exists => {
       if (!exists) {
         fs.mkdirSync(dirName);
-      } else {
-        fs.access(fileName,fs.constants.F_OK, err => {
-          if (err) {
-              fs.writeFile(fileName, '', 'utf8', err => {
-                  if (err) {
-                      console.warn('创建文件失败');
-                  } else {
-                      console.warn('创建文件成功');
-                      shell.openPath(fileName);
-                  }
-              });
-          } else {
-              console.log('文件存在');
-              shell.openPath(fileName);
-          }
-      }); 
-    }
+        var firstWord = '\n#note Welcome to use DailyNotes\n\n - For those enjoy simpliciy!\n - For those want complete content control!\n\n\n'
+          + '#todo Visit https://www.github.com/raywill/dailynotes for update!\n\n\n'
+          + '#todo Begin your work here...\n'
+        fs.writeFileSync(fileName, firstWord, 'utf8');
+      }
+      fs.access(fileName,fs.constants.F_OK, err => {
+        if (err) {
+            fs.writeFile(fileName, '', 'utf8', err => {
+                if (err) {
+                    console.warn('创建文件失败');
+                } else {
+                    console.warn('创建文件成功');
+                    shell.openPath(fileName);
+                }
+            });
+        } else {
+            console.log('文件存在');
+            shell.openPath(fileName);
+        }
+    }); 
   });
 };
 
@@ -106,7 +109,8 @@ var generateReport = function(type, delta) {
   // console.warn(type, delta);
   var results = "";
   let offset = 0 - delta;
-  for (var i = offset; i <= 0; ++i) {
+  //for (var i = offset; i <= 0; ++i) {
+  for (var i = 0;  i >= offset; --i) {
     var date = getDeltaDate(i)
     var fName =  date + ".txt";
     var fileName = path.join(dirName, fName);
