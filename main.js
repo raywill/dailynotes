@@ -33,9 +33,31 @@ var openTextFile = function(fName) {
     fs.exists(dirName, exists => {
       if (!exists) {
         fs.mkdirSync(dirName);
-        var firstWord = '\n#note Welcome to use DailyNotes\n\n - For those enjoy simpliciy!\n - For those want complete content control!\n\n\n'
-          + '#todo Visit https://www.github.com/raywill/dailynotes for update!\n\n\n'
-          + '#todo Begin your work here...\n'
+        var firstWord =
+					  '\n#note Welcome to use DailyNotes\n\n'
+          + ' - For those enjoy simplicity!\n'
+          + ' - For those want complete content control!\n'
+          + ' - Visit https://www.github.com/raywill/dailynotes for update!\n'
+					+ '\n'
+					+ '\n'
+					+ '#todo work for today:\n'
+					+ '\n'
+					+ ' - Check and respond to emails from clients and team members.\n'
+					+ ' - Attend the daily stand-up meeting with the team to discuss progress and plans.\n'
+					+ ' - Review and update the project requirements and user stories based on the feedback received.\n'
+					+ ' - Start working on implementing new features or fixing existing bugs.\n'
+					+ ' - Write and test code, and document it properly.\n'
+					+ ' - Conduct code reviews and provide feedback to other team members.\n'
+					+ ' - Attend meetings with clients to discuss project progress and gather feedback.\n'
+					+ ' - Update project management tools and trackers with the latest information.\n'
+					+ ' - Take breaks regularly to avoid burnout and ensure productivity.\n'
+					+ ' - Learn new technologies or programming languages to enhance skills and knowledge.\n'
+					+ '\n'
+					+ '\n'
+          + '#note Using the markdown viewer **Typora** to view weekly reports is strongly recommended!!\n'
+					+ '\n'
+					+ '\n'
+          + '#todo Begin your work here...\n';
         fs.writeFileSync(fileName, firstWord, 'utf8');
       }
       fs.access(fileName,fs.constants.F_OK, err => {
