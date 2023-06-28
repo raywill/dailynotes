@@ -135,6 +135,7 @@ var generateReport = function(type, delta) {
 var parseLabels = function(labels) {
   var menuArr = [];
   labels.split(',').forEach((item, index) => {
+    item = item.trim();
     var parts = item.split(' '); 
     if (parts.length < 2) return;
     var tag = parts[0].replace(/^#+/, '');
@@ -228,11 +229,18 @@ var initMenu = function(appIcon) {
   }
 };
 
+
 app.on('ready', function(){
   appIcon = new Tray(iconPath);
   appIcon.setToolTip("日志保存路径：" + dirName);
   initMenu(appIcon);
   appIcon.on('click', openDailyFile); 
+  fs.watch(configName,(event,filename)=>{
+      if (filename && event == 'change') {
+          initMenu(appIcon);
+          console.log(`${filename}文件发生更新，更新菜单`)
+      }
+  });
   openDailyFile();
 });
 
