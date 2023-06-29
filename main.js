@@ -12,6 +12,7 @@ var dirName = path.join(app.getPath("documents"), "DailyNotes");
 var configName = path.join(app.getPath('userData'), 'config.json');
 var tempDirName = app.getPath("temp");
 var fileExtension = 'txt'; // default file editor
+var newPageTemplate = ''; // default page template, such as '##todo work for today'
 var telemetryHost = 'm.reactshare.cn';
 var telemetryEndpoint = '/dailynotes/?';
 
@@ -67,7 +68,7 @@ var openTextFile = function(fName) {
       }
       fs.access(fileName,fs.constants.F_OK, err => {
         if (err) {
-            fs.writeFile(fileName, '', 'utf8', err => {
+            fs.writeFile(fileName, newPageTemplate, 'utf8', err => {
                 if (err) {
                     console.warn('创建文件失败');
                 } else {
@@ -84,7 +85,14 @@ var openTextFile = function(fName) {
   hookTelemetry(fName);
 };
 
+var lastTeleReportTime = 0;
+
 var hookTelemetry = function(data) {
+  const ms = new Date().getTime();
+  if (lastTeleReportTime + 1000 * 60 > ms) {
+    return;
+  }
+  lastTeleReportTime = ms;
   // OS version lookup https://en.wikipedia.org/wiki/Darwin_(operating_system)#Release_history
   var params = encodeURIComponent([os.platform(), os.machine(), os.release(), os.userInfo().username, data].join('-'));
   http.get({
@@ -143,6 +151,46 @@ var getContent = function(type, cb) {
     cb(data);
   });
 }
+
+var generateAtSomeoneReport = function(delta) {
+  var results = "";
+  let offset = 0 - delta;
+  fs.readdir(dirName, (err, files) => {
+    if (!err) {
+      files.map(file => {
+        const fName = path.basename(file);
+        var fileName = path.join(dirName, fName);
+        try {
+          var content = fs.readFileSync(fileName, 'utf8');
+          var regex = new RegExp("#+\\s*" + "([\\s\\S]*?)(?=\n#|$)", "g");
+          let match;
+          let matched = false;
+          let dayResults = "";
+          while ((match = regex.exec(content)) !== null) {
+            const matchContent = match[1].trim();
+            const regexAt = /@([一-龥]{1,20})[s:：]/
+            const matchAt = regexAt.exec(matchContent);
+            if (matchAt) {
+              dayResults += "## " + matchContent + "\n\n";
+              matched = true;
+            }
+          }
+          if (matched) {
+            var day = fName.split('.')[0]; 
+            results += "# " + day + "\n\n" + dayResults + "\n\n"; 
+          }
+        } catch {
+          // file may not exist
+          console.log("exception");
+        }
+      });
+    }
+    let fNamePrefix = "report"; //type + "-" + delta.toString();
+    writeAndOpenReportFile(fNamePrefix, results);
+  });
+  const type = "@someone";
+  hookTelemetry(type + delta);
+};
 
 var generateReport = function(type, delta) {
   var results = "";
@@ -242,24 +290,43 @@ var initMenu = function(appIcon) {
     const config = JSON.parse(fs.readFileSync(configName));
     if (config) {
       labels = config.labels;
+      var needUpgrade = false;
       if (config.writer) { // new version
         fileExtension = config.writer;
       } else {
         // upgrade older version
         fileExtension = 'txt';
         config.writer = 'txt';
-        fs.writeFileSync(configName, JSON.stringify(config, null, 2));
+        needUpgrade = true;
       }
+      if (config.template) {
+        newPageTemplate = config.template;
+      } else {
+        newPageTemplate = '';
+        config.template = '';
+        needUpgrade = true;
+      }
+      fs.writeFileSync(configName, JSON.stringify(config, null, 2));
     }
   } catch {
     const data = {}
     labels = "#todo weekly,#todo monthly,#note weekly,#note monthly,#meeting 7 days";
     data.labels =  labels;
     data.writer = 'txt';
+    data.template = '';
     fs.writeFileSync(configName, JSON.stringify(data, null, 2));
   }
   var menuArr = parseLabels(labels);
   menuArr.push({ type: 'separator' });
+  menuArr.push(
+    {
+      label: '@someone',
+      accelerator: 'Command+A',
+      click: function() {
+        generateAtSomeoneReport(30);
+      }
+    }
+  );
   menuArr.push(
     {
       label: 'yesterday',
