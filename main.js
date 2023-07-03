@@ -1,4 +1,5 @@
 const {app, dialog, clipboard, shell, Tray, Menu, BrowserWindow, systemPreferences} = require('electron');
+const { spawn } = require ('child_process');
 const path = require('path');
 const fs = require('fs')
 const os = require('os')
@@ -33,6 +34,12 @@ function getDeltaDate(delta) {
   const day = date.getDate().toString().padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
+
+var openTerminal = function() {
+  const atPath = dirName;
+  let openTerminalAtPath = spawn ('open', [ '-a', 'Terminal', atPath ]);
+  openTerminalAtPath.on ('error', (err) => { console.log (err); });
+};
 
 var openTextFile = function(fName) {
     var fileName = path.join(dirName, fName);
@@ -92,15 +99,25 @@ var hookTelemetry = function(data) {
   if (lastTeleReportTime + 1000 * 60 > ms) {
     return;
   }
-  lastTeleReportTime = ms;
-  // OS version lookup https://en.wikipedia.org/wiki/Darwin_(operating_system)#Release_history
-  var params = encodeURIComponent([os.platform(), os.machine(), os.release(), os.userInfo().username, data].join('-'));
-  http.get({
-    hostname: telemetryHost,
-    path: telemetryEndpoint + params,
-    port: 80,
-    webSecurity: false
-  });
+  try {
+    lastTeleReportTime = ms;
+    // OS version lookup https://en.wikipedia.org/wiki/Darwin_(operating_system)#Release_history
+    var params = encodeURIComponent([os.platform(), os.machine(), os.release(), os.userInfo().username, data].join('-'));
+    var req = http.get({
+      hostname: telemetryHost,
+      path: telemetryEndpoint + params,
+      port: 80,
+      timeout: 3000,
+      webSecurity: false
+    },
+    (res) => {}
+    );
+    req.on('error', (err) => {
+      // nop
+    });
+  } catch {
+    // nop
+  }
 };
 
 var openDailyFile = function() {
@@ -155,35 +172,49 @@ var getContent = function(type, cb) {
 var generateAtSomeoneReport = function(delta) {
   var results = "";
   let offset = 0 - delta;
+  var fileMap = new Map();
   fs.readdir(dirName, (err, files) => {
     if (!err) {
       files.map(file => {
-        const fName = path.basename(file);
-        var fileName = path.join(dirName, fName);
-        try {
-          var content = fs.readFileSync(fileName, 'utf8');
-          var regex = new RegExp("#+\\s*" + "([\\s\\S]*?)(?=\n#|$)", "g");
-          let match;
-          let matched = false;
-          let dayResults = "";
-          while ((match = regex.exec(content)) !== null) {
-            const matchContent = match[1].trim();
-            const regexAt = /@([一-龥]{1,20})[s:：]/
-            const matchAt = regexAt.exec(matchContent);
-            if (matchAt) {
-              dayResults += "## " + matchContent + "\n\n";
-              matched = true;
-            }
-          }
-          if (matched) {
-            var day = fName.split('.')[0]; 
-            results += "# " + day + "\n\n" + dayResults + "\n\n"; 
-          }
-        } catch {
-          // file may not exist
-          console.log("exception");
+        const ext = path.extname(file);
+        const base = path.basename(file, ext);
+        if (fileMap.has(base)) {
+          fileMap.get(base).push(path.basename(file));
+        } else {
+          fileMap.set(base, [path.basename(file)]);
         }
       });
+      for (var i = 0;  i >= offset; --i) {
+        var date = getDeltaDate(i)
+        if (fileMap.has(date)) {
+          fileMap.get(date).forEach(fName => {
+            var fileName = path.join(dirName, fName);
+            try {
+              var content = fs.readFileSync(fileName, 'utf8');
+              var regex = new RegExp("#+\\s*" + "([\\s\\S]*?)(?=\n#|$)", "g");
+              let match;
+              let matched = false;
+              let dayResults = "";
+              while ((match = regex.exec(content)) !== null) {
+                const matchContent = match[1].trim();
+                const regexAt = /@([一-龥]{1,20})[s:：$\S]/
+                const matchAt = regexAt.exec(matchContent);
+                if (matchAt) {
+                  dayResults += "## " + matchContent + "\n\n";
+                  matched = true;
+                }
+              }
+              if (matched) {
+                var day = fName.split('.')[0]; 
+                results += "# " + day + "\n\n" + dayResults + "\n\n"; 
+              }
+            } catch {
+              // file may not exist
+              console.log("exception");
+            }
+          });
+        }
+      }
     }
     let fNamePrefix = "report"; //type + "-" + delta.toString();
     writeAndOpenReportFile(fNamePrefix, results);
@@ -335,6 +366,17 @@ var initMenu = function(appIcon) {
       }
     }
   );
+  /*
+  // experimental only
+  menuArr.push(
+    {
+      label: 'grep search',
+      click: function() {
+        openTerminal();
+      }
+    }
+  );
+  */
   menuArr.push({ type: 'separator' });
   menuArr.push(
     {
