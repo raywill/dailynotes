@@ -206,7 +206,7 @@ var generateAtSomeoneReport = function(delta) {
               }
               if (matched) {
                 var day = fName.split('.')[0]; 
-                results += "# " + day + "\n\n" + dayResults + "\n\n"; 
+                results += "# [" + day + "](" + fileName + ")\n\n" + dayResults + "\n\n"; 
               }
             } catch {
               // file may not exist
@@ -254,7 +254,7 @@ var generateReport = function(type, delta) {
                 matched = true;
               }
               if (matched) {
-                results += "# " + date + "\n\n" + dayResults + "\n\n"; 
+                results += "# [" + date + "](" + fileName + ")\n\n" + dayResults + "\n\n"; 
               }
             } catch {
               // file may not exist
