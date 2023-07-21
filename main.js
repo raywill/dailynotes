@@ -35,6 +35,17 @@ function getDeltaDate(delta) {
   return `${year}-${month}-${day}`;
 }
 
+function getDeltaDateWithWeekDay(delta) {
+  var date = new Date();
+  date.setDate(date.getDate() + delta);
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const weekday = weekdays[date.getDay()];
+  return `${year}-${month}-${day} (${weekday})`;
+}
+
 var openTerminal = function() {
   const atPath = dirName;
   let openTerminalAtPath = spawn ('open', [ '-a', 'Terminal', atPath ]);
@@ -125,11 +136,19 @@ var openDailyFile = function() {
     openTextFile(fName);
 };
 
-var openDailyFileByDelta = function(delta) {
-    var fName = getDeltaDate(-1) + "." + fileExtension;
-    openTextFile(fName);
+var openDailyFileLast = function() {
+    var maxFindOffset = -30;
+    var found = false;
+    for (var i = -1;  !found && i >= maxFindOffset; --i) {
+      var fName = getDeltaDate(i) + "." + fileExtension;
+      var fileName = path.join(dirName, fName);
+      console.warn(fileName);
+      if (fs.existsSync(fileName)) {
+        found = true;
+        openTextFile(fName);
+      };
+    }
 };
-
 
 var writeAndOpenReportFile = function(fNamePrefix, content) {
     var fName = fNamePrefix + ".md";
@@ -169,6 +188,54 @@ var getContent = function(type, cb) {
   });
 }
 
+
+var openLastDaysSummary = function(delta) {
+  var results = "";
+  let offset = 0 - delta;
+  var fileMap = new Map();
+  fs.readdir(dirName, (err, files) => {
+    if (!err) {
+      files.map(file => {
+        const ext = path.extname(file);
+        const base = path.basename(file, ext);
+        if (fileMap.has(base)) {
+          fileMap.get(base).push(path.basename(file));
+        } else {
+          fileMap.set(base, [path.basename(file)]);
+        }
+      });
+      for (var i = 0;  i >= offset; --i) {
+        var date = getDeltaDate(i)
+        var dateReadable = getDeltaDateWithWeekDay(i)
+        if (fileMap.has(date)) {
+          fileMap.get(date).forEach(fName => {
+            var fileName = path.join(dirName, fName);
+            try {
+              var dayResults = fs.readFileSync(fileName, 'utf8');
+              results += "# [" + dateReadable + "](" + fileName + ")\n\n" + dayResults + "\n\n"; 
+            } catch {
+              // file may not exist
+              console.log("exception");
+            }
+          });
+        }
+      }
+    }
+    let fNamePrefix = "report"; //type + "-" + delta.toString();
+    writeAndOpenReportFile(fNamePrefix, results);
+  });
+  const type = "lastdayssummary";
+  hookTelemetry(type + delta);
+};
+
+var openLastWeekSummary = function() {
+  openLastDaysSummary(7);
+};
+var openLastMonthSummary = function() {
+  openLastDaysSummary(30);
+};
+
+
 var generateAtSomeoneReport = function(delta) {
   var results = "";
   let offset = 0 - delta;
@@ -186,6 +253,7 @@ var generateAtSomeoneReport = function(delta) {
       });
       for (var i = 0;  i >= offset; --i) {
         var date = getDeltaDate(i)
+        var dateReadable = getDeltaDateWithWeekDay(i)
         if (fileMap.has(date)) {
           fileMap.get(date).forEach(fName => {
             var fileName = path.join(dirName, fName);
@@ -205,8 +273,7 @@ var generateAtSomeoneReport = function(delta) {
                 }
               }
               if (matched) {
-                var day = fName.split('.')[0]; 
-                results += "# [" + day + "](" + fileName + ")\n\n" + dayResults + "\n\n"; 
+                results += "# [" + dateReadable + "](" + fileName + ")\n\n" + dayResults + "\n\n"; 
               }
             } catch {
               // file may not exist
@@ -240,6 +307,7 @@ var generateReport = function(type, delta) {
       });
       for (var i = 0;  i >= offset; --i) {
         var date = getDeltaDate(i)
+        var dateReadable = getDeltaDateWithWeekDay(i)
         if (fileMap.has(date)) {
           fileMap.get(date).forEach(fName => {
             var fileName = path.join(dirName, fName);
@@ -254,7 +322,7 @@ var generateReport = function(type, delta) {
                 matched = true;
               }
               if (matched) {
-                results += "# [" + date + "](" + fileName + ")\n\n" + dayResults + "\n\n"; 
+                results += "# [" + dateReadable + "](" + fileName + ")\n\n" + dayResults + "\n\n"; 
               }
             } catch {
               // file may not exist
@@ -360,9 +428,25 @@ var initMenu = function(appIcon) {
   );
   menuArr.push(
     {
-      label: 'yesterday',
+      label: 'last day',
       click: function() {
-        openDailyFileByDelta(1);
+        openDailyFileLast();
+      }
+    }
+  );
+  menuArr.push(
+    {
+      label: 'last week',
+      click: function() {
+        openLastWeekSummary();
+      }
+    }
+  );
+  menuArr.push(
+    {
+      label: 'last month',
+      click: function() {
+        openLastMonthSummary();
       }
     }
   );
