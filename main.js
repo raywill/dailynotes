@@ -46,6 +46,13 @@ function getDeltaDateWithWeekDay(delta) {
   return `${year}-${month}-${day} (${weekday})`;
 }
 
+function getDeltaWeekDay(delta) {
+  var date = new Date();
+  date.setDate(date.getDate() + delta);
+  return date.getDay();
+}
+
+
 var openTerminal = function() {
   const atPath = dirName;
   let openTerminalAtPath = spawn ('open', [ '-a', 'Terminal', atPath ]);
@@ -211,8 +218,18 @@ var openLastDaysSummary = function(delta) {
           fileMap.get(date).forEach(fName => {
             var fileName = path.join(dirName, fName);
             try {
-              var dayResults = fs.readFileSync(fileName, 'utf8');
-              results += "# [" + dateReadable + "](" + fileName + ")\n\n" + dayResults + "\n\n"; 
+              var content = fs.readFileSync(fileName, 'utf8');
+              var regex = new RegExp("#+\\s*" + "([\\s\\S]*?)(?=\n#|$)", "g");
+              let match;
+              let matched = false;
+              let dayResults = "";
+              while ((match = regex.exec(content)) !== null) {
+                dayResults += "## " + match[1].trim() + "\n\n";
+                matched = true;
+              }
+              if (matched) {
+                results += "# [" + dateReadable + "](" + fileName + ")\n\n" + dayResults + "\n\n"; 
+              }
             } catch {
               // file may not exist
               console.log("exception");
@@ -234,6 +251,60 @@ var openLastWeekSummary = function() {
 var openLastMonthSummary = function() {
   openLastDaysSummary(30);
 };
+var openCalendarView = function() {
+  var results = "";
+  let offset = -180;
+  var fileMap = new Map();
+  fs.readdir(dirName, (err, files) => {
+    if (!err) {
+      files.map(file => {
+        const ext = path.extname(file);
+        const base = path.basename(file, ext);
+        if (fileMap.has(base)) {
+          fileMap.get(base).push(path.basename(file));
+        } else {
+          fileMap.set(base, [path.basename(file)]);
+          console.log("add base", base);
+        }
+      });
+
+      var extFrom = getDeltaWeekDay(offset);
+      var extTo = 6 - getDeltaWeekDay(0);
+      offset -= extFrom; //align to Sunday
+      rest = extTo; // align to Sat
+      results += "## Recent 180 days Calendar View\n\n";
+      results += "> Use 'Command + Click' to quick open the note\n\n";
+      results += "| SUN  | MON | TUE | WEN | THU  | FRI | SAT |\n";
+      results += "| --- | --- | --- | --- | --- | --- | --- |\n";
+      var rowResults = ''; // used to filter out empty week data
+      var hasNotes = false;
+      for (var i = offset;  i < rest; i+=1) {
+        var date = getDeltaDate(i)
+        var dateReadable = getDeltaDateWithWeekDay(i)
+        rowResults += "| ";
+        if (fileMap.has(date)) {
+          fName = fileMap.get(date)[0];
+          var fileName = path.join(dirName, fName);
+          rowResults += "[" + date + "](" + fileName + ")"; 
+          hasNotes = true;
+        }
+        if (i != offset && getDeltaWeekDay(i) == 6) {
+          rowResults += "|\n"; // Switch to Next Line in Saturday
+          if (hasNotes) {
+            results += rowResults;
+            hasNotes = false;
+          }
+          rowResults = '';
+        }
+      }
+    }
+    let fNamePrefix = "calendar"; //type + "-" + delta.toString();
+    writeAndOpenReportFile(fNamePrefix, results);
+  });
+  const type = "calendar";
+  hookTelemetry(type);
+};
+
 
 
 var generateAtSomeoneReport = function(delta) {
@@ -419,7 +490,7 @@ var initMenu = function(appIcon) {
   menuArr.push({ type: 'separator' });
   menuArr.push(
     {
-      label: '@someone',
+      label: '@Someone',
       accelerator: 'Command+A',
       click: function() {
         generateAtSomeoneReport(30);
@@ -428,7 +499,7 @@ var initMenu = function(appIcon) {
   );
   menuArr.push(
     {
-      label: 'last day',
+      label: 'Last Day',
       click: function() {
         openDailyFileLast();
       }
@@ -436,7 +507,7 @@ var initMenu = function(appIcon) {
   );
   menuArr.push(
     {
-      label: 'last week',
+      label: 'Last Week',
       click: function() {
         openLastWeekSummary();
       }
@@ -444,9 +515,17 @@ var initMenu = function(appIcon) {
   );
   menuArr.push(
     {
-      label: 'last month',
+      label: 'Last Month',
       click: function() {
         openLastMonthSummary();
+      }
+    }
+  );
+  menuArr.push(
+    {
+      label: 'Calendar View',
+      click: function() {
+        openCalendarView();
       }
     }
   );
@@ -464,7 +543,7 @@ var initMenu = function(appIcon) {
   menuArr.push({ type: 'separator' });
   menuArr.push(
     {
-      label: 'all notes',
+      label: 'All Notes',
       accelerator: 'Command+D',
       click: function() {
         shell.openPath(dirName);
@@ -473,7 +552,7 @@ var initMenu = function(appIcon) {
   );
   menuArr.push(
     {
-      label: 'config',
+      label: 'Config',
       accelerator: 'Command+C',
       click: function() {
         shell.openPath(configName);
