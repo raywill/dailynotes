@@ -14,6 +14,7 @@ var configName = path.join(app.getPath('userData'), 'config.json');
 var tempDirName = app.getPath("temp");
 var fileExtension = 'txt'; // default file editor
 var newPageTemplate = ''; // default page template, such as '##todo work for today'
+var userDefinedFiles = [];
 var telemetryHost = 'm.reactshare.cn';
 var telemetryEndpoint = '/dailynotes/?';
 
@@ -157,6 +158,11 @@ var openDailyFileLast = function() {
     }
 };
 
+var openUserDefinedFile = function(fileNamePrefix) {
+  var fName = fileNamePrefix + "." + fileExtension;
+  openTextFile(fName);
+};
+
 var writeAndOpenReportFile = function(fNamePrefix, content) {
     var fName = fNamePrefix + ".md";
     var fileName = path.join(tempDirName, fName);
@@ -251,6 +257,51 @@ var openLastWeekSummary = function() {
 var openLastMonthSummary = function() {
   openLastDaysSummary(30);
 };
+
+var openListView = function() {
+  var results = "";
+  var lineResults = "";
+  let offset = -180;
+  var fileMap = new Map();
+  fs.readdir(dirName, (err, files) => {
+    if (!err) {
+      files.map(file => {
+        const ext = path.extname(file);
+        const base = path.basename(file, ext);
+        if (fileMap.has(base)) {
+          fileMap.get(base).push(path.basename(file));
+        } else {
+          fileMap.set(base, [path.basename(file)]);
+        }
+      });
+
+      lineResults += "## Recent 180 days List View\n\n";
+      lineResults += "> Use 'Command + Click' to quick open the note\n\n";
+      lineResults += "| Shorts |\n"
+      lineResults += "| ------ |\n";
+
+      for (var i = 0;  i >= offset; i--) {
+        var date = getDeltaDate(i)
+        if (fileMap.has(date)) {
+          fName = fileMap.get(date)[0];
+          var fileName = path.join(dirName, fName);
+          var content = fs.readFileSync(fileName, 'utf8');
+          var regex = new RegExp("(^|\n)#+([\\s\\S]*?)(\n|$)", "g");
+          let match;
+          while ((match = regex.exec(content)) !== null) {
+            var line = "|[" + date + "](" + fileName + "): " + match[2].trim() + "|\n";
+            lineResults += line;
+          }
+        }
+      }
+    }
+    let fNamePrefix = "listview"; //type + "-" + delta.toString();
+    writeAndOpenReportFile(fNamePrefix, lineResults);
+  });
+  const type = "listview";
+  hookTelemetry(type);
+};
+
 var openCalendarView = function() {
   var results = "";
   let offset = -180;
@@ -264,7 +315,6 @@ var openCalendarView = function() {
           fileMap.get(base).push(path.basename(file));
         } else {
           fileMap.set(base, [path.basename(file)]);
-          console.log("add base", base);
         }
       });
 
@@ -272,13 +322,15 @@ var openCalendarView = function() {
       var extTo = 6 - getDeltaWeekDay(0);
       offset -= extFrom; //align to Sunday
       rest = extTo; // align to Sat
+
+      var rowResults = ''; // used to filter out empty week data
       results += "## Recent 180 days Calendar View\n\n";
       results += "> Use 'Command + Click' to quick open the note\n\n";
       results += "| SUN  | MON | TUE | WEN | THU  | FRI | SAT |\n";
       results += "| --- | --- | --- | --- | --- | --- | --- |\n";
-      var rowResults = ''; // used to filter out empty week data
+
       var hasNotes = false;
-      for (var i = offset;  i < rest; i+=1) {
+      for (var i = offset;  i <= rest; i+=1) {
         var date = getDeltaDate(i)
         var dateReadable = getDeltaDateWithWeekDay(i)
         rowResults += "| ";
@@ -461,6 +513,12 @@ var initMenu = function(appIcon) {
     if (config) {
       labels = config.labels;
       var needUpgrade = false;
+      if (config.user_defined_file) { // new version
+        userDefinedFiles = config.user_defined_file.split(';');
+      } else {
+        config.user_defined_file = '';
+        needUpgrade = true;
+      }
       if (config.writer) { // new version
         fileExtension = config.writer;
       } else {
@@ -488,6 +546,7 @@ var initMenu = function(appIcon) {
   }
   var menuArr = parseLabels(labels);
   menuArr.push({ type: 'separator' });
+
   menuArr.push(
     {
       label: '@Someone',
@@ -520,6 +579,14 @@ var initMenu = function(appIcon) {
         openLastMonthSummary();
       }
     }
+  ); 
+  menuArr.push(
+    {
+      label: 'Short View',
+      click: function() {
+        openListView();
+      }
+    }
   );
   menuArr.push(
     {
@@ -540,10 +607,25 @@ var initMenu = function(appIcon) {
     }
   );
   */
+
+  if (userDefinedFiles.length > 0) {
+    menuArr.push({ type: 'separator' });
+    userDefinedFiles.forEach((item, index) => {
+      menuArr.push(
+        {
+          label: item,
+          click: function() {
+            openUserDefinedFile(item);
+          }
+        }
+      );
+    });
+  }
+
   menuArr.push({ type: 'separator' });
   menuArr.push(
     {
-      label: 'All Notes',
+      label: 'Notes Directory',
       accelerator: 'Command+D',
       click: function() {
         shell.openPath(dirName);
