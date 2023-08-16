@@ -277,11 +277,12 @@ var openListView = function() {
 
       lineResults += "## Recent 180 days List View\n\n";
       lineResults += "> Use 'Command + Click' to quick open the note\n\n";
-      lineResults += "| Shorts |\n"
+      lineResults += "| Brief |\n"
       lineResults += "| ------ |\n";
 
       for (var i = 0;  i >= offset; i--) {
         var date = getDeltaDate(i)
+        var fileResult = '';
         if (fileMap.has(date)) {
           fName = fileMap.get(date)[0];
           var fileName = path.join(dirName, fName);
@@ -290,8 +291,9 @@ var openListView = function() {
           let match;
           while ((match = regex.exec(content)) !== null) {
             var line = "|[" + date + "](" + fileName + "): " + match[2].trim() + "|\n";
-            lineResults += line;
+            fileResult = line + fileResult;
           }
+          lineResults += fileResult;
         }
       }
     }
@@ -475,6 +477,9 @@ var parseLabels = function(labels) {
       case "monthly":
         days = 30;
         break;
+      case "yearly":
+        days = 365;
+        break;
       default:
         parts.shift();
         if (parts.length == 1) {
@@ -514,9 +519,10 @@ var initMenu = function(appIcon) {
       labels = config.labels;
       var needUpgrade = false;
       if (config.user_defined_file) { // new version
-        userDefinedFiles = config.user_defined_file.split(';');
+        userDefinedFiles = config.user_defined_file.split(/[,;]/);
       } else {
         config.user_defined_file = '';
+        userDefinedFiles = [];
         needUpgrade = true;
       }
       if (config.writer) { // new version
@@ -580,9 +586,10 @@ var initMenu = function(appIcon) {
       }
     }
   ); 
+  menuArr.push({ type: 'separator' });
   menuArr.push(
     {
-      label: 'Short View',
+      label: 'List View',
       click: function() {
         openListView();
       }
