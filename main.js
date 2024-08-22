@@ -12,7 +12,7 @@ app.allowRendererProcessReuse = true
 var dirName = path.join(app.getPath("documents"), "DailyNotes");
 var configName = path.join(app.getPath('userData'), 'config.json');
 var tempDirName = app.getPath("temp");
-var fileExtension = 'txt'; // default file editor
+var fileExtension = 'md'; // default file editor
 var newPageTemplate = ''; // default page template, such as '##todo work for today'
 var userDefinedFiles = [];
 var telemetryHost = 'm.reactshare.cn';
@@ -164,9 +164,11 @@ var openUserDefinedFile = function(fileNamePrefix) {
 };
 
 var writeAndOpenReportFile = function(fNamePrefix, content) {
+    var reportDirName = dirName;
+    // var reportDirName = tempDirName;
     var fName = fNamePrefix + ".md";
-    var fileName = path.join(tempDirName, fName);
-    fs.exists(tempDirName, exists => {
+    var fileName = path.join(reportDirName, fName);
+    fs.exists(reportDirName, exists => {
       if (!exists) {
         console.warn("找不到临时文件夹");
       } else {
@@ -290,14 +292,14 @@ var openListView = function() {
           var regex = new RegExp("(^|\n)#+([\\s\\S]*?)(\n|$)", "g");
           let match;
           while ((match = regex.exec(content)) !== null) {
-            var line = "|[" + date + "](" + fileName + "): " + match[2].trim() + "|\n";
+            var line = "|[" + date + "](" + fName + "): " + match[2].trim() + "|\n";
             fileResult = line + fileResult;
           }
           lineResults += fileResult;
         }
       }
     }
-    let fNamePrefix = "listview"; //type + "-" + delta.toString();
+    let fNamePrefix = "dailynote_listview"; //type + "-" + delta.toString();
     writeAndOpenReportFile(fNamePrefix, lineResults);
   });
   const type = "listview";
@@ -338,7 +340,8 @@ var openCalendarView = function() {
         rowResults += "| ";
         if (fileMap.has(date)) {
           fName = fileMap.get(date)[0];
-          var fileName = path.join(dirName, fName);
+          //var fileName = path.join(dirName, fName);
+          var fileName = fName;
           rowResults += "[" + date + "](" + fileName + ")"; 
           hasNotes = true;
         }
@@ -352,7 +355,7 @@ var openCalendarView = function() {
         }
       }
     }
-    let fNamePrefix = "calendar"; //type + "-" + delta.toString();
+    let fNamePrefix = "dailynote_calendar"; //type + "-" + delta.toString();
     writeAndOpenReportFile(fNamePrefix, results);
   });
   const type = "calendar";
@@ -529,8 +532,8 @@ var initMenu = function(appIcon) {
         fileExtension = config.writer;
       } else {
         // upgrade older version
-        fileExtension = 'txt';
-        config.writer = 'txt';
+        fileExtension = 'md';
+        config.writer = 'md';
         needUpgrade = true;
       }
       if (config.template) {
@@ -546,7 +549,7 @@ var initMenu = function(appIcon) {
     const data = {}
     labels = "#todo weekly,#todo monthly,#note weekly,#note monthly,#meeting 7 days";
     data.labels =  labels;
-    data.writer = 'txt';
+    data.writer = 'md';
     data.template = '';
     fs.writeFileSync(configName, JSON.stringify(data, null, 2));
   }
