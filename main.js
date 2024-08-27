@@ -1,4 +1,4 @@
-const {app, dialog, clipboard, shell, Tray, Menu, BrowserWindow, systemPreferences} = require('electron');
+const {app, dialog, ipcMain, clipboard, shell, Tray, Menu, BrowserWindow, systemPreferences} = require('electron');
 const { spawn } = require ('child_process');
 const path = require('path');
 const fs = require('fs')
@@ -6,7 +6,9 @@ const os = require('os')
 const http = require('http')
 const iconPath = path.join(__dirname, 'icon.png');
 let appIcon = null;
-let win = null;
+let mainWindow = null;
+let searchWindow = null;
+
 app.allowRendererProcessReuse = true
 
 var dirName = path.join(app.getPath("documents"), "DailyNotes");
@@ -246,7 +248,7 @@ var openLastDaysSummary = function(delta) {
         }
       }
     }
-    let fNamePrefix = "report"; //type + "-" + delta.toString();
+    let fNamePrefix = "dailynotes_report"; //type + "-" + delta.toString();
     writeAndOpenReportFile(fNamePrefix, results);
   });
   const type = "lastdayssummary";
@@ -299,7 +301,7 @@ var openListView = function() {
         }
       }
     }
-    let fNamePrefix = "dailynote_listview"; //type + "-" + delta.toString();
+    let fNamePrefix = "dailynotes_listview"; //type + "-" + delta.toString();
     writeAndOpenReportFile(fNamePrefix, lineResults);
   });
   const type = "listview";
@@ -355,7 +357,7 @@ var openCalendarView = function() {
         }
       }
     }
-    let fNamePrefix = "dailynote_calendar"; //type + "-" + delta.toString();
+    let fNamePrefix = "dailynotes_calendar"; //type + "-" + delta.toString();
     writeAndOpenReportFile(fNamePrefix, results);
   });
   const type = "calendar";
@@ -411,7 +413,7 @@ var generateAtSomeoneReport = function(delta) {
         }
       }
     }
-    let fNamePrefix = "report"; //type + "-" + delta.toString();
+    let fNamePrefix = "dailynotes_report"; //type + "-" + delta.toString();
     writeAndOpenReportFile(fNamePrefix, results);
   });
   const type = "@someone";
@@ -459,7 +461,7 @@ var generateReport = function(type, delta) {
         }
       }
     }
-    let fNamePrefix = "report"; //type + "-" + delta.toString();
+    let fNamePrefix = "dailynotes_report"; //type + "-" + delta.toString();
     writeAndOpenReportFile(fNamePrefix, results);
   });
   hookTelemetry(type + delta);
@@ -514,6 +516,123 @@ var parseLabels = function(labels) {
   return menuArr;
 };
 
+function createSearchDialog() {
+    searchWindow = new BrowserWindow({
+        width: 900,
+        height: 700,
+        modal: true,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false
+        }
+    });
+    searchWindow.loadFile('search-dialog.html');
+    searchWindow.on('closed', () => {
+        // searchWindow = null;
+    });
+}
+
+// begin paste
+
+ipcMain.on('search-files', async (event, query) => {
+    const directory = path.join(app.getPath('documents'), 'DailyNotes');
+    const results = [];
+
+    const files = fs.readdirSync(directory).filter(file => ((file.endsWith('.txt') || file.endsWith('.md')) && !file.startsWith('dailynotes_') && query.length > 0));
+
+    for (const file of files) {
+        const filePath = path.join(directory, file);
+        const content = fs.readFileSync(filePath, 'utf8');
+
+        // 按行分隔并处理
+        const lines = content.split('\n');
+        let currentTitle = '';
+        let currentLines = [];
+
+        lines.forEach(line => {
+            if (line.startsWith('# ')) {
+                // 处理之前的内容
+                if (currentTitle && currentLines.length > 0) {
+                    processContent(file, currentTitle, currentLines, query, results);
+                }
+                // 更新当前标题
+                currentTitle = line.substring(2).trim();
+                currentLines = [];
+            } else {
+                currentLines.push(line);
+            }
+        });
+
+        // 处理最后一部分内容
+        if (currentTitle && currentLines.length > 0) {
+            processContent(file, currentTitle, currentLines, query, results);
+        }
+    }
+
+    event.reply('search-results', formatResults(results, query));
+});
+
+function processContent(file, title, lines, query, results) {
+    // 使用 Unicode 支持的正则表达式
+    const regex = new RegExp(`(${query})`, 'giu'); // 'u' 使正则表达式支持 Unicode，'i' 使匹配不区分大小写，'g' 使匹配全局
+    const matches = new Set(); // 使用 Set 来去重
+
+    if (regex.test(title)) {
+        matches.add('');
+    }
+
+    lines.forEach(line => {
+        if (regex.test(line)) {
+            matches.add(line);
+        }
+    });
+
+    if (matches.size > 0) {
+        const result = results.find(r => r.file === file && r.title === title);
+        if (result) {
+            result.matches.push(...matches);
+        } else {
+            results.push({
+                file,
+                title,
+                matches: Array.from(matches)
+            });
+        }
+    }
+}
+
+function formatResults(results, query) {
+    return results.map(result => {
+        const { file, title, matches } = result;
+        
+        // 对匹配结果进行格式化
+        const formattedMatches = matches.map(match => {
+            return match.replace(new RegExp(`(${query})`, 'giu'), `<b style='color:#ea4335'>$1</b>`);
+        }).join('<br />');
+
+        return {
+            file,
+            title,
+            content: formattedMatches
+        };
+    });
+}
+
+ipcMain.on('open-file', (event, fName) => {
+    var filePath = path.join(dirName, fName);
+    shell.openPath(filePath);
+});
+
+// end paste
+/*
+ipcMain.on('close-search-dialog', () => {
+    if (searchWindow) {
+        searchWindow.close();
+    }
+});
+*/
+
+
 var initMenu = function(appIcon) {
   var labels = "";
   try {
@@ -553,7 +672,20 @@ var initMenu = function(appIcon) {
     data.template = '';
     fs.writeFileSync(configName, JSON.stringify(data, null, 2));
   }
-  var menuArr = parseLabels(labels);
+  var menuArr = [];
+
+  menuArr.push(
+    {
+      label: 'Search',
+      accelerator: 'Command+S',
+      click: function() {
+      	createSearchDialog();
+      }
+    }
+  );
+  menuArr.push({ type: 'separator' });
+
+  menuArr.push(...parseLabels(labels));
   menuArr.push({ type: 'separator' });
 
   menuArr.push(
@@ -678,8 +810,8 @@ app.on('ready', function(){
 
 app.on('activate', openDailyFile);
 
-app.on('window-all-cloased', () => {
+app.on('window-all-closed', () => {
   if (process.platform !== 'drawin') {
-    app.quit()
+    // app.quit()
   }
 })

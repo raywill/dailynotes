@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+            width: 880px;
+            height: 700px;
+            display: block;
+            justify-content: center;
+            align-items: center;
+        }
+        .dialog {
+            background-color: #ffffff;
+            padding: 10px;
+            width: 98%;
+        }
+        h2 {
+            font-size: 1.25rem;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-size: 0.875rem;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 1rem;
+            color: #333;
+        }
+        button {
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 15px;
+            margin-right: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        button#cancel {
+            background-color: #6c757d;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        button:active {
+            opacity: 0.7;
+        }
+        .result {
+            border-top: 1px solid #ddd;
+            margin-top: 15px;
+            padding-top: 10px;
+            font-size: 0.875rem;
+            color: #333;
+        }
+        .result div {
+            margin-bottom: 10px;
+        }
+        .result strong {
+	    font-size: 1rem;
+	}
+	.result .title-content {
+            color: #007bff;
+	}
+        .result hr {
+            border: none;
+            border-top: 1px solid #eee;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="dialog">
+        <h2>Search</h2>
+        <div class="input-group">
+            <label for="query">Enter search query:</label>
+            <input type="text" id="query" placeholder="Type your query here">
+        </div>
+        <div class="input-group">
+            <button id="search">Search</button>
+        </div>
+        <div class="result" id="result">
+            <!-- Search results will be displayed here -->
+        </div>
+    </div>
+    <script src="search-dialog.js"></script>
+</body>
+</html>
