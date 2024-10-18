@@ -6,6 +6,11 @@ Daily notes with  unlimited capability
 - Generate weekly & monthly report automatically for '#note' & '#todo' tags.
 - You can customize tags, report peroids.
 
+# Calandar View
+You can easily get a summary for what you have write.
+
+![image](https://github.com/user-attachments/assets/9998f07d-b8ca-4576-9305-956fae81b12a)
+
 ## config
 
 You can modify the `config.json` file to customize the menu. Any tag text is supported. `weekly`, `monthly`, `day`, `days`, `month`, `months`, `year`, `years` are supported. Example:
