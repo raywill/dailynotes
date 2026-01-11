@@ -1,907 +1,878 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DailyNotes - Embrace the Flow of Thoughts</title>
+    <title>DailyNotes - Flow State Journaling</title>
+    <meta name="description" content="A minimalist, file-system based daily journal for macOS.">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        body: ['Inter', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    },
+                    animation: {
+                        'blob': 'blob 7s infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'fade-up': 'fadeUp 0.8s ease-out forwards',
+                        'packet-left': 'packetLeft 2s linear infinite',
+                        'pulse-impact': 'pulseImpact 2s linear infinite',
+                        'fade-in': 'fadeIn 0.3s ease-out forwards',
+                    },
+                    keyframes: {
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        },
+                        fadeUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(5px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        packetLeft: {
+                            '0%': { left: '0%', opacity: '0', width: '0%' },
+                            '10%': { opacity: '1', width: '20%' }, 
+                            '45%': { width: '40%' }, 
+                            '50%': { left: '100%', opacity: '1', width: '0%' }, 
+                            '51%': { opacity: '0' },
+                            '100%': { left: '100%', opacity: '0' },
+                        },
+                        pulseImpact: {
+                            '0%, 48%': { transform: 'scale(1)', boxShadow: '0 0 0 rgba(0,0,0,0)', borderColor: '#fef3c7' }, 
+                            '50%': { transform: 'scale(1.02)', boxShadow: '0 0 15px rgba(245, 158, 11, 0.2)', borderColor: '#f59e0b' }, 
+                            '55%, 100%': { transform: 'scale(1)', boxShadow: '0 0 0 rgba(0,0,0,0)', borderColor: '#fef3c7' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
         }
-
-        :root {
-            --primary: #2563eb;
-            --primary-dark: #1e40af;
-            --text: #1f2937;
-            --text-light: #6b7280;
-            --bg: #ffffff;
-            --bg-secondary: #f9fafb;
-            --border: #e5e7eb;
-            --accent: #10b981;
-            --shadow: rgba(0, 0, 0, 0.1);
+        .glass-dark {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-            line-height: 1.6;
-            color: var(--text);
-            background: var(--bg);
-            overflow-x: hidden;
+        .bento-card {
+            @apply bg-white rounded-3xl p-8 border border-slate-100 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 relative overflow-hidden;
         }
-
-        /* Header */
-        header {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            z-index: 1000;
-            border-bottom: 1px solid var(--border);
-            transition: all 0.3s ease;
+        .text-gradient {
+            background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
-
-        header.scrolled {
-            box-shadow: 0 4px 20px var(--shadow);
+        /* Custom scrollbar hiding for clean UI */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
         }
-
-        nav {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 1.5rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
-
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--primary);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .logo::before {
-            content: "📝";
-            font-size: 1.8rem;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-            list-style: none;
-        }
-
-        .nav-links a {
-            color: var(--text);
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.3s;
-        }
-
-        .nav-links a:hover {
-            color: var(--primary);
-        }
-
-        .cta-button {
-            padding: 0.75rem 1.5rem;
-            background: var(--primary);
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        .cta-button:hover {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-        }
-
-        /* Hero Section */
-        .hero {
-            padding: 10rem 2rem 6rem;
-            text-align: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .hero::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg width="60" height="60" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h60v60H0z" fill="none"/><path d="M30 0v60M0 30h60" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></svg>');
-            opacity: 0.3;
-        }
-
-        .hero-content {
-            max-width: 800px;
-            margin: 0 auto;
-            position: relative;
-            z-index: 1;
-        }
-
-        .hero h1 {
-            font-size: 3.5rem;
-            font-weight: 800;
-            margin-bottom: 1.5rem;
-            line-height: 1.2;
-            animation: fadeInUp 0.8s ease;
-        }
-
-        .hero p {
-            font-size: 1.3rem;
-            margin-bottom: 2rem;
-            opacity: 0.95;
-            animation: fadeInUp 0.8s ease 0.2s backwards;
-        }
-
-        .hero-buttons {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            animation: fadeInUp 0.8s ease 0.4s backwards;
-        }
-
-        .hero-button {
-            padding: 1rem 2rem;
-            border-radius: 10px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s;
-            font-size: 1.1rem;
-        }
-
-        .hero-button.primary {
-            background: white;
-            color: var(--primary);
-        }
-
-        .hero-button.primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-        }
-
-        .hero-button.secondary {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: 2px solid white;
-        }
-
-        .hero-button.secondary:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        /* Sections */
-        section {
-            padding: 6rem 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        section:nth-child(even) {
-            background: var(--bg-secondary);
-        }
-
-        .section-title {
-            font-size: 2.5rem;
-            font-weight: 700;
-            text-align: center;
-            margin-bottom: 1rem;
-            color: var(--text);
-        }
-
-        .section-subtitle {
-            text-align: center;
-            font-size: 1.2rem;
-            color: var(--text-light);
-            margin-bottom: 4rem;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        /* Philosophy Section */
-        .philosophy-content {
-            max-width: 800px;
-            margin: 0 auto;
-            font-size: 1.15rem;
-            line-height: 1.8;
-        }
-
-        .philosophy-highlight {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 2.5rem;
-            border-radius: 16px;
-            margin: 2rem 0;
-            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
-        }
-
-        .philosophy-highlight h3 {
-            font-size: 1.8rem;
-            margin-bottom: 1rem;
-        }
-
-        .philosophy-points {
-            display: grid;
-            gap: 1.5rem;
-            margin-top: 2rem;
-        }
-
-        .philosophy-point {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 12px;
-            border-left: 4px solid var(--primary);
-            box-shadow: 0 2px 8px var(--shadow);
-            transition: all 0.3s;
-        }
-
-        .philosophy-point:hover {
-            transform: translateX(8px);
-            box-shadow: 0 4px 16px var(--shadow);
-        }
-
-        .philosophy-point h4 {
-            color: var(--primary);
-            margin-bottom: 0.5rem;
-            font-size: 1.2rem;
-        }
-
-        /* Feature Cards */
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-top: 3rem;
-        }
-
-        .feature-card {
-            background: white;
-            padding: 2.5rem;
-            border-radius: 16px;
-            box-shadow: 0 4px 24px var(--shadow);
-            transition: all 0.3s;
-            border: 1px solid var(--border);
-        }
-
-        .feature-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
-        }
-
-        .feature-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            display: block;
-        }
-
-        .feature-card h3 {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-            color: var(--text);
-        }
-
-        .feature-card p {
-            color: var(--text-light);
-            line-height: 1.7;
-        }
-
-        .feature-card ul {
-            margin-top: 1rem;
-            list-style: none;
-            padding-left: 0;
-        }
-
-        .feature-card li {
-            padding: 0.5rem 0;
-            padding-left: 1.5rem;
-            position: relative;
-            color: var(--text-light);
-        }
-
-        .feature-card li::before {
-            content: "✓";
-            position: absolute;
-            left: 0;
-            color: var(--accent);
-            font-weight: bold;
-        }
-
-        /* Privacy Section */
-        .privacy-banner {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-            padding: 3rem;
-            border-radius: 16px;
-            text-align: center;
-            box-shadow: 0 8px 32px rgba(16, 185, 129, 0.2);
-        }
-
-        .privacy-banner h2 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .privacy-banner p {
-            font-size: 1.2rem;
-            opacity: 0.95;
-            margin-bottom: 2rem;
-        }
-
-        .privacy-features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
-            margin-top: 3rem;
-        }
-
-        .privacy-item {
-            text-align: center;
-            padding: 2rem;
-        }
-
-        .privacy-item-icon {
-            font-size: 3.5rem;
-            margin-bottom: 1rem;
-            display: block;
-        }
-
-        .privacy-item h4 {
-            font-size: 1.3rem;
-            margin-bottom: 0.5rem;
-        }
-
-        /* Tag System */
-        .tag-examples {
-            display: grid;
-            gap: 2rem;
-            margin-top: 3rem;
-        }
-
-        .tag-example {
-            background: white;
-            border-radius: 12px;
-            padding: 2rem;
-            border: 2px solid var(--border);
-            transition: all 0.3s;
-        }
-
-        .tag-example:hover {
-            border-color: var(--primary);
-            box-shadow: 0 8px 24px var(--shadow);
-        }
-
-        .tag-example h4 {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-            color: var(--primary);
-        }
-
-        .tag-code {
-            background: #1f2937;
-            color: #10b981;
-            padding: 1rem;
-            border-radius: 8px;
-            font-family: 'Monaco', 'Courier New', monospace;
-            margin: 1rem 0;
-            overflow-x: auto;
-        }
-
-        /* Footer */
-        footer {
-            background: var(--text);
-            color: white;
-            padding: 3rem 2rem;
-            text-align: center;
-        }
-
-        footer a {
-            color: var(--primary);
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-
-        footer a:hover {
-            color: #60a5fa;
-        }
-
-        /* Animations */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .fade-in {
-            opacity: 0;
-            animation: fadeInUp 0.8s ease forwards;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .hero h1 {
-                font-size: 2.5rem;
-            }
-
-            .hero p {
-                font-size: 1.1rem;
-            }
-
-            .hero-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .nav-links {
-                display: none;
-            }
-
-            .feature-grid {
-                grid-template-columns: 1fr;
-            }
-
-            section {
-                padding: 4rem 1.5rem;
-            }
-        }
-
-        /* Scroll indicator */
-        .scroll-indicator {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 0%;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary), var(--accent));
-            z-index: 10000;
-            transition: width 0.3s;
-        }
+        /* Editor syntax highlighting simulation */
+        .syntax-tag { color: #0ea5e9; font-weight: 600; }
+        .syntax-comment { color: #94a3b8; font-style: italic; }
+        .syntax-highlight { background-color: #f0f9ff; border-radius: 4px; padding: 0 4px; }
     </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "react/": "https://esm.sh/react@^19.2.3/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
 </head>
-<body>
-    <div class="scroll-indicator" id="scrollIndicator"></div>
+<body class="bg-slate-50 text-slate-900 font-body antialiased overflow-x-hidden selection:bg-brand-200 selection:text-brand-900">
 
-    <header id="header">
-        <nav>
-            <a href="#" class="logo">DailyNotes</a>
-            <ul class="nav-links">
-                <li><a href="#philosophy">Philosophy</a></li>
-                <li><a href="#openness">Openness</a></li>
-                <li><a href="#privacy">Privacy</a></li>
-                <li><a href="#tags">Tags</a></li>
-            </ul>
-            <a href="https://github.com/raywill/dailynotes" class="cta-button">Get Started</a>
-        </nav>
+    <!-- Ambient Background -->
+    <div class="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div class="absolute top-0 left-1/4 w-[800px] h-[800px] bg-brand-200/40 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob"></div>
+        <div class="absolute top-0 right-1/4 w-[600px] h-[600px] bg-purple-200/40 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000"></div>
+        <div class="absolute -bottom-32 left-1/3 w-[600px] h-[600px] bg-pink-200/40 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-4000"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="fixed top-6 w-full z-50 px-4">
+        <div class="max-w-5xl mx-auto">
+            <div class="glass rounded-full px-6 py-3 flex items-center justify-between shadow-lg shadow-black/5">
+                <a href="#" class="flex items-center gap-2 group">
+                    <div class="bg-slate-900 text-white p-1.5 rounded-lg group-hover:rotate-12 transition-transform">
+                        <i data-lucide="pen-tool" class="w-4 h-4"></i>
+                    </div>
+                    <span class="font-sans font-bold text-lg tracking-tight">DailyNotes</span>
+                </a>
+                
+                <div class="hidden md:flex items-center gap-1">
+                    <a href="#philosophy" class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-full hover:bg-white/50 transition-all">Philosophy</a>
+                    <a href="#openness" class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-full hover:bg-white/50 transition-all">Ecosystem</a>
+                    <a href="#features" class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-full hover:bg-white/50 transition-all">Features</a>
+                </div>
+
+                <a href="https://github.com/raywill/dailynotes/releases" class="bg-slate-900 text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-slate-800 transition-all hover:scale-105 shadow-lg shadow-brand-500/20 flex items-center gap-2">
+                    <i data-lucide="download" class="w-4 h-4"></i> Download
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="pt-48 pb-32 px-4 relative">
+        <div class="max-w-4xl mx-auto text-center">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/80 border border-slate-200 backdrop-blur-sm text-slate-600 text-xs font-bold uppercase tracking-widest mb-8 animate-fade-up">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                v1.0 Available for macOS
+            </div>
+            
+            <h1 class="text-6xl md:text-8xl font-sans font-bold tracking-tight text-slate-900 mb-8 leading-[0.95] animate-fade-up" style="animation-delay: 0.1s">
+                Capture the<br>
+                <span class="text-gradient">Flow State.</span>
+            </h1>
+            
+            <p class="text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed animate-fade-up" style="animation-delay: 0.2s">
+                A daily journal that removes the friction of "organizing."<br>
+                <span class="text-slate-900 font-medium">No folders. No cloud login. Just a fresh page, every day.</span>
+            </p>
+
+            <!-- CTA Buttons -->
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-fade-up" style="animation-delay: 0.25s">
+                <a href="https://github.com/raywill/dailynotes/releases" class="group bg-slate-900 text-white px-8 py-4 rounded-full text-base font-semibold hover:bg-slate-800 transition-all hover:shadow-xl hover:-translate-y-1 flex items-center gap-2">
+                    <i data-lucide="download" class="w-5 h-5 group-hover:animate-bounce"></i> 
+                    Download for macOS
+                </a>
+                <a href="https://github.com/raywill/dailynotes" class="group bg-white text-slate-700 border border-slate-200 px-8 py-4 rounded-full text-base font-semibold hover:bg-slate-50 hover:border-slate-300 transition-all hover:-translate-y-1 flex items-center gap-2">
+                    <i data-lucide="github" class="w-5 h-5 text-slate-900"></i>
+                    View on GitHub
+                </a>
+            </div>
+
+            <!-- Abstract Visual Representation of "Flow" -->
+            <div class="relative w-full max-w-3xl mx-auto h-64 md:h-80 animate-fade-up" style="animation-delay: 0.3s">
+                <!-- Card 1: Yesterday (Fading) -->
+                <div class="absolute left-0 top-8 w-64 h-48 glass rounded-2xl p-6 transform -rotate-6 scale-90 opacity-60 z-0 border-slate-200">
+                    <div class="h-2 w-20 bg-slate-300 rounded mb-4"></div>
+                    <div class="space-y-2">
+                        <div class="h-1.5 w-full bg-slate-200 rounded"></div>
+                        <div class="h-1.5 w-4/5 bg-slate-200 rounded"></div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Today (Active) -->
+                <div class="absolute left-1/2 -translate-x-1/2 top-0 w-80 md:w-96 h-56 md:h-64 bg-white rounded-2xl shadow-2xl p-8 transform z-10 border border-slate-100 flex flex-col justify-between animate-float">
+                    <div>
+                        <div class="flex items-center justify-between mb-6">
+                            <span class="font-mono text-sm text-brand-600 font-bold bg-brand-50 px-2 py-1 rounded">2024-03-21 (Today)</span>
+                            <div class="flex gap-1.5">
+                                <div class="w-2.5 h-2.5 rounded-full bg-red-400"></div>
+                                <div class="w-2.5 h-2.5 rounded-full bg-amber-400"></div>
+                                <div class="w-2.5 h-2.5 rounded-full bg-emerald-400"></div>
+                            </div>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="h-3 w-full bg-slate-100 rounded animate-pulse"></div>
+                            <div class="h-3 w-3/4 bg-slate-100 rounded animate-pulse" style="animation-delay: 0.1s"></div>
+                            <div class="h-3 w-5/6 bg-slate-100 rounded animate-pulse" style="animation-delay: 0.2s"></div>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded-full">#ideas</span>
+                        <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded-full">#journal</span>
+                    </div>
+                </div>
+
+                <!-- Card 3: Tomorrow (Waiting) -->
+                <div class="absolute right-0 top-8 w-64 h-48 glass rounded-2xl p-6 transform rotate-6 scale-90 opacity-60 z-0 border-slate-200 flex items-center justify-center">
+                    <div class="text-slate-300 font-sans font-bold text-2xl">Tomorrow</div>
+                </div>
+            </div>
+        </div>
     </header>
 
-    <section class="hero">
-        <div class="hero-content">
-            <h1>Embrace the Flow of Thoughts</h1>
-            <p>Stop organizing. Stop categorizing. Just write. DailyNotes flows like a stream — each day is a fresh page, no mental overhead.</p>
-            <div class="hero-buttons">
-                <a href="https://github.com/raywill/dailynotes/releases" class="hero-button primary">Download for macOS</a>
-                <a href="https://github.com/raywill/dailynotes" class="hero-button secondary">View on GitHub</a>
-            </div>
-        </div>
-    </section>
-
-    <section id="philosophy">
-        <h2 class="section-title">The Philosophy: Let It Flow</h2>
-        <p class="section-subtitle">The best note-taking system is one you actually use</p>
-        
-        <div class="philosophy-content">
-            <div class="philosophy-highlight">
-                <h3>🌊 Notes Are a Stream, Not a Library</h3>
-                <p>DailyNotes was born from a simple realization: the friction of organizing notes kills the habit of taking them. We spend more time deciding "where does this go?" than actually capturing thoughts.</p>
+    <!-- Section 1: Philosophy (Structured Grid) -->
+    <section id="philosophy" class="py-24 px-4 bg-white/50 border-y border-slate-100">
+        <div class="max-w-6xl mx-auto">
+            <div class="mb-16 md:text-center max-w-3xl mx-auto">
+                <span class="text-brand-600 font-bold tracking-wider uppercase text-sm">The Philosophy</span>
+                <h2 class="text-3xl md:text-5xl font-sans font-bold mt-2 mb-4 text-slate-900">Let It Flow.</h2>
+                <p class="text-slate-600 text-xl leading-relaxed">Stop organizing. Stop categorizing. Just write. DailyNotes flows like a stream.<br /> Each day is a <b>fresh</b> page.</p>
             </div>
 
-            <div class="philosophy-points">
-                <div class="philosophy-point">
-                    <h4>No Folders, No Categories, No Decisions</h4>
-                    <p>Every day starts with a blank page. Yesterday's thoughts are yesterday. Today is today. This temporal organization is the only structure you need — it's automatic, effortless, and mirrors how life actually flows.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Point 1 -->
+                <div class="p-8 rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6">
+                        <i data-lucide="waves" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-slate-900">Stream, Not Library</h3>
+                    <p class="text-slate-600 leading-relaxed text-sm">
+                        Friction kills the habit. We spend more time deciding "where does this go?" than writing. DailyNotes removes this barrier completely.
+                    </p>
                 </div>
 
-                <div class="philosophy-point">
-                    <h4>Zero Mental Overhead</h4>
-                    <p>Open DailyNotes. Write. That's it. No "Should this be in Projects or Personal?" No "Do I create a new folder?" No "Let me reorganize this later." The lowest barrier to capture means you'll actually capture everything.</p>
+                <!-- Point 2 -->
+                <div class="p-8 rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="w-12 h-12 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mb-6">
+                        <i data-lucide="folder-x" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-slate-900">No Folders</h3>
+                    <p class="text-slate-600 leading-relaxed text-sm">
+                        Yesterday is yesterday. Today is today. Temporal organization is effortless and automatic.
+                    </p>
                 </div>
 
-                <div class="philosophy-point">
-                    <h4>Let Tags Emerge Naturally</h4>
-                    <p>Organization isn't gone — it's just inverted. Instead of pre-planning categories, you use tags inline (#todo, #idea, #meeting). They emerge from your natural workflow. Later, DailyNotes can surface all #meeting notes from the past month with one click.</p>
+                <!-- Point 3 -->
+                <div class="p-8 rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mb-6">
+                        <i data-lucide="zap" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-slate-900">Zero Mental Overhead</h3>
+                    <p class="text-slate-600 leading-relaxed text-sm">
+                        Just open and write. No "Should this be in Projects?". The lowest barrier to capture means you'll actually capture everything.
+                    </p>
                 </div>
 
-                <div class="philosophy-point">
-                    <h4>Trust Search, Not Structure</h4>
-                    <p>Your brain is good at remembering context ("it was around last Tuesday") and keywords. DailyNotes gives you powerful search and calendar views. You don't need perfect organization — you need good retrieval.</p>
+                <!-- Point 4 -->
+                <div class="p-8 rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="w-12 h-12 bg-pink-50 text-pink-600 rounded-2xl flex items-center justify-center mb-6">
+                        <i data-lucide="hash" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-slate-900">Tags Emerge Naturally</h3>
+                    <p class="text-slate-600 leading-relaxed text-sm">
+                        Organization is inverted. Use inline tags (#todo, #idea) as you write. Structure emerges from your workflow, not before it.
+                    </p>
                 </div>
 
-                <div class="philosophy-point">
-                    <h4>Embrace Impermanence</h4>
-                    <p>Not every note needs to be永恒. Most notes are scaffolding — useful for a week, a project, a moment. By keeping notes in a daily stream, you naturally let old, irrelevant content fade into the archive. It's still there if you need it, but it's not cluttering your mind.</p>
+                <!-- Point 5 -->
+                <div class="p-8 rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center mb-6">
+                        <i data-lucide="search" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-slate-900">Trust Search</h3>
+                    <p class="text-slate-600 leading-relaxed text-sm">
+                        Your brain remembers context ("it was last Tuesday"). You don't need perfect organization—you need perfect retrieval.
+                    </p>
+                </div>
+
+                <!-- Point 6 -->
+                <div class="p-8 rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-6">
+                        <i data-lucide="hourglass" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-slate-900">Embrace Impermanence</h3>
+                    <p class="text-slate-600 leading-relaxed text-sm">
+                        Most notes are scaffolding. Let irrelevant content fade into the archive. It's there if you need it, but not cluttering your mind.
+                    </p>
                 </div>
             </div>
         </div>
     </section>
 
-    <section id="openness">
-        <h2 class="section-title">Radical Openness</h2>
-        <p class="section-subtitle">Your notes, your tools, your way. DailyNotes is a hub, not a prison.</p>
-
-        <div class="feature-grid">
-            <div class="feature-card">
-                <span class="feature-icon">✍️</span>
-                <h3>Use Your Favorite Editor</h3>
-                <p>DailyNotes doesn't lock you into a proprietary editor. Your notes are plain Markdown files. Open them with:</p>
-                <ul>
-                    <li><strong>Typora</strong> for beautiful WYSIWYG editing</li>
-                    <li><strong>VS Code</strong> for power-user workflows</li>
-                    <li><strong>iA Writer</strong> for distraction-free writing</li>
-                    <li><strong>Obsidian</strong> for graph views and plugins</li>
-                    <li><strong>Vim/Emacs</strong> for terminal lovers</li>
-                </ul>
-                <p style="margin-top: 1rem;">DailyNotes creates the files and generates reports. You edit them with whatever feels right today.</p>
+    <!-- Section 2: Radical Openness (The Ecosystem) -->
+    <section id="openness" class="py-24 bg-white border-y border-slate-100">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="mb-10">
+                <span class="text-brand-600 font-bold tracking-wider uppercase text-sm">The Ecosystem</span>
+                <h2 class="text-4xl font-sans font-bold mt-2 mb-6">Your Data, Your Rules.</h2>
+                <p class="text-lg text-slate-600 max-w-2xl">
+                    DailyNotes is essentially a beautiful interface for your filesystem. We use standard Markdown files, making your notes compatible with the entire developer ecosystem.
+                </p>
             </div>
 
-            <div class="feature-card">
-                <span class="feature-icon">🤖</span>
-                <h3>AI-Powered Insights with Cursor</h3>
-                <p>Your daily notes are a goldmine of patterns. Use Cursor AI to:</p>
-                <ul>
-                    <li><strong>Summarize weeks or months</strong> of notes in seconds</li>
-                    <li><strong>Extract action items</strong> across all your #todo tags</li>
-                    <li><strong>Identify recurring themes</strong> in your thinking</li>
-                    <li><strong>Generate meeting summaries</strong> from your raw notes</li>
-                    <li><strong>Find connections</strong> between ideas weeks apart</li>
-                </ul>
-                <p style="margin-top: 1rem;">Since notes are just text files, any AI tool can read them. Your DailyNotes folder is prompt-ready.</p>
+            <!-- Data Flow Visualization -->
+            <div class="relative w-full bg-slate-50 border border-slate-200 rounded-3xl overflow-hidden mb-16 hidden lg:block">
+                <!-- Subtle grid background -->
+                <div class="absolute inset-0 opacity-[0.03]" style="background-image: radial-gradient(#64748b 1px, transparent 1px); background-size: 24px 24px;"></div>
+                
+                <div class="relative z-10 p-12 flex items-stretch justify-between gap-0 h-[400px]">
+                    
+                    <!-- 1. Source: DailyNotes App (Left) -->
+                    <div class="flex flex-col items-center justify-center gap-4 w-48 relative z-20">
+                        <div class="w-24 h-24 bg-white rounded-2xl shadow-lg border border-slate-200 flex flex-col items-center justify-center group hover:-translate-y-1 transition-transform">
+                            <div class="bg-slate-900 text-white p-2 rounded-lg mb-2">
+                                <i data-lucide="pen-tool" class="w-6 h-6"></i>
+                            </div>
+                            <span class="text-xs font-bold text-slate-900">DailyNotes</span>
+                        </div>
+                    </div>
+
+                    <!-- CONNECTION 1: App to FileSystem (Green Laser Beam) -->
+                    <div class="flex-1 relative flex items-center justify-center -mx-4 z-0">
+                        <!-- The Track -->
+                        <div class="w-full h-[1px] bg-slate-200 relative overflow-visible">
+                            <!-- The Laser Pulse -->
+                            <div class="absolute top-1/2 -translate-y-1/2 h-[3px] bg-gradient-to-r from-transparent via-[#39ff14] to-transparent shadow-[0_0_8px_#39ff14] animate-packet-left z-10 rounded-full"></div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Hub: Filesystem (Middle - WIDER & Pulsing) -->
+                    <div class="flex flex-col items-center justify-center gap-4 w-80 relative z-20 mx-4">
+                        <div class="w-full h-32 bg-amber-50 rounded-2xl shadow-xl border border-amber-100 flex flex-col items-center justify-center relative ring-4 ring-white animate-pulse-impact origin-center">
+                            <i data-lucide="folder-open" class="w-10 h-10 text-amber-500 mb-2"></i>
+                            <div class="font-mono text-sm font-bold text-amber-900 px-4 py-1 bg-amber-100/50 rounded text-center break-all">~/Documents/DailyNotes/</div>
+                            <span class="text-[10px] text-amber-600 mt-2 font-mono border border-amber-200 px-2 rounded bg-white">Format: .md</span>
+                        </div>
+                    </div>
+
+                    <!-- CONNECTION 2: FileSystem to Tools (Curved Paths with Small Circular Particles) -->
+                    <div class="flex-1 relative z-0 -mx-4">
+                         <!-- SVG Viewbox aligned to cover this area -->
+                         <svg class="absolute inset-0 w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 100">
+                            <defs>
+                                <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color:#cbd5e1;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#cbd5e1;stop-opacity:0.2" />
+                                </linearGradient>
+                            </defs>
+                            
+                            <!-- Path 1 (Top) -->
+                            <path id="path1" d="M 0 50 C 40 50, 40 10, 100 10" stroke="url(#grad1)" stroke-width="0.5" fill="none" vector-effect="non-scaling-stroke" />
+                            <!-- Using slightly smaller circle radius to minimize distortion effect -->
+                            <circle r="1.5" fill="#9333ea">
+                                <animateMotion dur="2s" repeatCount="indefinite" keyPoints="0;0;1" keyTimes="0;0.5;1">
+                                    <mpath href="#path1"/>
+                                </animateMotion>
+                                <animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;0.5;0.51;0.9;1" dur="2s" repeatCount="indefinite" />
+                            </circle>
+                            
+                            <!-- Path 2 -->
+                            <path id="path2" d="M 0 50 C 50 50, 50 36, 100 36" stroke="url(#grad1)" stroke-width="0.5" fill="none" vector-effect="non-scaling-stroke" />
+                            <circle r="1.5" fill="#2563eb">
+                                <animateMotion dur="2s" repeatCount="indefinite" keyPoints="0;0;1" keyTimes="0;0.5;1">
+                                    <mpath href="#path2"/>
+                                </animateMotion>
+                                <animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;0.5;0.51;0.9;1" dur="2s" repeatCount="indefinite" />
+                            </circle>
+
+                            <!-- Path 3 -->
+                            <path id="path3" d="M 0 50 C 50 50, 50 64, 100 64" stroke="url(#grad1)" stroke-width="0.5" fill="none" vector-effect="non-scaling-stroke" />
+                            <circle r="1.5" fill="#0ea5e9">
+                                <animateMotion dur="2s" repeatCount="indefinite" keyPoints="0;0;1" keyTimes="0;0.5;1">
+                                    <mpath href="#path3"/>
+                                </animateMotion>
+                                <animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;0.5;0.51;0.9;1" dur="2s" repeatCount="indefinite" />
+                            </circle>
+
+                            <!-- Path 4 (Bottom) -->
+                            <path id="path4" d="M 0 50 C 40 50, 40 90, 100 90" stroke="url(#grad1)" stroke-width="0.5" fill="none" vector-effect="non-scaling-stroke" />
+                            <circle r="1.5" fill="#059669">
+                                <animateMotion dur="2s" repeatCount="indefinite" keyPoints="0;0;1" keyTimes="0;0.5;1">
+                                    <mpath href="#path4"/>
+                                </animateMotion>
+                                <animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;0.5;0.51;0.9;1" dur="2s" repeatCount="indefinite" />
+                            </circle>
+                         </svg>
+                    </div>
+
+                    <!-- 3. Destinations (Right - Tightly Coupled) -->
+                    <div class="flex flex-col justify-between w-56 py-4 relative z-20">
+                        <!-- Tool 1 -->
+                        <div class="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:scale-105 hover:border-purple-200 transition-all cursor-default">
+                            <div class="p-2 bg-purple-50 text-purple-600 rounded-lg"><i data-lucide="sparkles" class="w-5 h-5"></i></div>
+                            <div>
+                                <div class="text-sm font-bold text-slate-800">AI / Cursor</div>
+                                <div class="text-[10px] text-slate-500">Analytics & Summaries</div>
+                            </div>
+                        </div>
+                        <!-- Tool 2 -->
+                        <div class="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:scale-105 hover:border-blue-200 transition-all cursor-default">
+                            <div class="p-2 bg-blue-50 text-blue-600 rounded-lg"><i data-lucide="file-code" class="w-5 h-5"></i></div>
+                            <div>
+                                <div class="text-sm font-bold text-slate-800">Obsidian / VS Code</div>
+                                <div class="text-[10px] text-slate-500">Knowledge Graph</div>
+                            </div>
+                        </div>
+                        <!-- Tool 3 -->
+                        <div class="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:scale-105 hover:border-sky-200 transition-all cursor-default">
+                            <div class="p-2 bg-sky-50 text-sky-600 rounded-lg"><i data-lucide="cloud" class="w-5 h-5"></i></div>
+                            <div>
+                                <div class="text-sm font-bold text-slate-800">iCloud / Drive</div>
+                                <div class="text-[10px] text-slate-500">Multi-device Sync</div>
+                            </div>
+                        </div>
+                        <!-- Tool 4 -->
+                        <div class="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:scale-105 hover:border-emerald-200 transition-all cursor-default">
+                            <div class="p-2 bg-emerald-50 text-emerald-600 rounded-lg"><i data-lucide="git-branch" class="w-5 h-5"></i></div>
+                            <div>
+                                <div class="text-sm font-bold text-slate-800">Git / Scripts</div>
+                                <div class="text-[10px] text-slate-500">Version Control</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
             </div>
 
-            <div class="feature-card">
-                <span class="feature-icon">☁️</span>
-                <h3>Sync with Your Cloud</h3>
-                <p>DailyNotes stores everything in <code>~/Documents/DailyNotes</code>. This means seamless sync with:</p>
-                <ul>
-                    <li><strong>iCloud Drive</strong> — automatic on macOS</li>
-                    <li><strong>Dropbox</strong> — sync across all devices</li>
-                    <li><strong>Google Drive</strong> — backup to the cloud</li>
-                    <li><strong>Git</strong> — version control for note nerds</li>
-                    <li><strong>Syncthing</strong> — decentralized, private sync</li>
-                </ul>
-                <p style="margin-top: 1rem;">Your sync strategy, your choice. DailyNotes doesn't dictate or interfere.</p>
-            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <!-- Ecosystem Item 1 -->
+                <div class="p-6 rounded-2xl bg-slate-50 border border-slate-100 hover:border-brand-300 hover:bg-white transition-all group">
+                    <div class="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center mb-4 text-blue-600 group-hover:scale-110 transition-transform">
+                        <i data-lucide="file-code-2" class="w-6 h-6"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-900">VS Code / Obsidian</h4>
+                    <p class="text-xs text-slate-500 mt-2">Open the folder in any editor for bulk refactoring or visualizations.</p>
+                </div>
 
-            <div class="feature-card">
-                <span class="feature-icon">🔍</span>
-                <h3>Search with Alfred/Raycast</h3>
-                <p>Supercharge your note retrieval:</p>
-                <ul>
-                    <li>Add <code>~/Documents/DailyNotes</code> to Alfred's search scope</li>
-                    <li>Instant full-text search across all notes</li>
-                    <li>Open any note with a keyboard shortcut</li>
-                    <li>Jump to today's note in 0.5 seconds</li>
-                </ul>
-                <p style="margin-top: 1rem;">DailyNotes has built-in search (⌘S), but power users can go even faster with launcher integration.</p>
-            </div>
+                <!-- Ecosystem Item 2 -->
+                <div class="p-6 rounded-2xl bg-slate-50 border border-slate-100 hover:border-purple-300 hover:bg-white transition-all group">
+                    <div class="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center mb-4 text-purple-600 group-hover:scale-110 transition-transform">
+                        <i data-lucide="bot" class="w-6 h-6"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-900">AI & Cursor</h4>
+                    <p class="text-xs text-slate-500 mt-2">Feed your notes to LLMs: "Summarize my last week's mood."</p>
+                </div>
 
-            <div class="feature-card">
-                <span class="feature-icon">📊</span>
-                <h3>Analyze with Scripts</h3>
-                <p>Your notes folder is a data source. Write scripts to:</p>
-                <ul>
-                    <li><strong>Count your productivity</strong> — how many #todo items per week?</li>
-                    <li><strong>Track habits</strong> — did I write #exercise notes this month?</li>
-                    <li><strong>Generate charts</strong> — visualize note-taking patterns</li>
-                    <li><strong>Build custom reports</strong> — way beyond what DailyNotes generates</li>
-                </ul>
-                <p style="margin-top: 1rem;">Plain text is programmable. Your imagination is the limit.</p>
-            </div>
+                <!-- Ecosystem Item 3 -->
+                <div class="p-6 rounded-2xl bg-slate-50 border border-slate-100 hover:border-sky-300 hover:bg-white transition-all group">
+                    <div class="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center mb-4 text-sky-600 group-hover:scale-110 transition-transform">
+                        <i data-lucide="cloud" class="w-6 h-6"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-900">Any Cloud</h4>
+                    <p class="text-xs text-slate-500 mt-2">iCloud, Dropbox, Google Drive, or Git. You choose the sync engine.</p>
+                </div>
 
-            <div class="feature-card">
-                <span class="feature-icon">🔗</span>
-                <h3>Integrate with Everything</h3>
-                <p>Because notes are just files, they play nice with:</p>
-                <ul>
-                    <li><strong>Hazel</strong> — auto-organize or archive old notes</li>
-                    <li><strong>Keyboard Maestro</strong> — macro workflows</li>
-                    <li><strong>Shortcuts (iOS/macOS)</strong> — quick-add from anywhere</li>
-                    <li><strong>DEVONthink</strong> — knowledge management</li>
-                    <li><strong>Notion/Evernote</strong> — import when you need richer structure</li>
-                </ul>
-                <p style="margin-top: 1rem;">DailyNotes doesn't compete with your ecosystem — it amplifies it.</p>
-            </div>
-        </div>
-    </section>
-
-    <section id="privacy" style="background: var(--bg);">
-        <div class="privacy-banner">
-            <h2>🔒 Your Notes, Your Privacy</h2>
-            <p>Zero data collection. Zero cloud uploads. Zero tracking. Zero compromise.</p>
-        </div>
-
-        <div class="privacy-features">
-            <div class="privacy-item">
-                <span class="privacy-item-icon">💾</span>
-                <h4>100% Local Storage</h4>
-                <p>Every note stays on your Mac. DailyNotes never phones home, never uploads, never syncs to our servers. Because we don't have servers.</p>
-            </div>
-
-            <div class="privacy-item">
-                <span class="privacy-item-icon">🚫</span>
-                <h4>No Telemetry</h4>
-                <p>We don't know what you write. We don't know how often you write. We don't even know you're using DailyNotes. Your usage is invisible to us.</p>
-            </div>
-
-            <div class="privacy-item">
-                <span class="privacy-item-icon">🔓</span>
-                <h4>No Lock-In</h4>
-                <p>Your notes are Markdown files in a folder. No database, no proprietary format, no export needed. Stop using DailyNotes tomorrow, and your notes are still perfectly readable.</p>
-            </div>
-
-            <div class="privacy-item">
-                <span class="privacy-item-icon">🛡️</span>
-                <h4>Open Source</h4>
-                <p>Verify our privacy claims yourself. Every line of code is on GitHub. No secrets, no backdoors, no hidden agendas.</p>
-            </div>
-        </div>
-
-        <div style="text-align: center; margin-top: 3rem; font-size: 1.2rem; color: var(--text-light);">
-            <p><strong>In an age of data collection and surveillance capitalism, DailyNotes is a sanctuary.</strong></p>
-            <p style="margin-top: 1rem;">Write freely. Think freely. Your thoughts are yours alone.</p>
-        </div>
-    </section>
-
-    <section id="tags">
-        <h2 class="section-title">The Tag System: Power in Simplicity</h2>
-        <p class="section-subtitle">Organization that emerges from your writing, not imposed before it</p>
-
-        <div class="tag-examples">
-            <div class="tag-example">
-                <h4>📝 Basic Tagging: Write Naturally</h4>
-                <p>Just add # before any word in your notes. No setup, no configuration:</p>
-                <div class="tag-code"># Meeting with Design Team<br>Discussed #roadmap and #UI revisions<br>#todo: Send mockups to stakeholders</div>
-                <p style="margin-top: 1rem;">Later, right-click the DailyNotes menu bar icon → search for #roadmap → see all roadmap discussions across months.</p>
-            </div>
-
-            <div class="tag-example">
-                <h4>📅 Time-Based Reports: Your Custom Summaries</h4>
-                <p>Configure any tag to generate periodic reports. Examples:</p>
-                <ul style="margin: 1rem 0;">
-                    <li><code>#todo weekly</code> — every week's tasks in one view</li>
-                    <li><code>#meeting 30 days</code> — last month of meetings</li>
-                    <li><code>#idea 1 year</code> — your annual idea archive</li>
-                    <li><code>#health 7 days</code> — track weekly health notes</li>
-                </ul>
-                <p>Set it once in Settings, then one-click access forever. No manual work.</p>
-            </div>
-
-            <div class="tag-example">
-                <h4>🎯 Project Management: Lightweight & Powerful</h4>
-                <p>Use tags as micro-project trackers:</p>
-                <div class="tag-code">#project-apollo Status: In Progress<br>#todo: Finalize API spec<br>#todo: Review security audit<br>#note: Client wants faster timeline</div>
-                <p style="margin-top: 1rem;">Generate a <code>#project-apollo 90 days</code> report to see the entire project timeline — notes, todos, decisions — all in context.</p>
-            </div>
-
-            <div class="tag-example">
-                <h4>🧠 Knowledge Building: Connect the Dots</h4>
-                <p>Tags help you see patterns over time:</p>
-                <ul style="margin: 1rem 0;">
-                    <li><code>#learning</code> — all knowledge you've captured</li>
-                    <li><code>#insight</code> — breakthrough moments</li>
-                    <li><code>#question</code> — curiosities to explore</li>
-                    <li><code>#resource</code> — useful links and references</li>
-                </ul>
-                <p>After months, a <code>#learning 1 year</code> report shows your intellectual journey. Patterns emerge you never noticed day-to-day.</p>
-            </div>
-
-            <div class="tag-example">
-                <h4>👥 People & Relationships</h4>
-                <p>Use @ tags to track conversations and interactions:</p>
-                <div class="tag-code"># Coffee with @alice<br>Discussed #startup idea for AI tools<br>#todo: Send her the investor deck</div>
-                <p style="margin-top: 1rem;">DailyNotes has a built-in <code>@Someone</code> report (⌘A) that surfaces all @ mentions from the past month. Never forget what you discussed.</p>
-            </div>
-
-            <div class="tag-example">
-                <h4>🎨 Creative Freedom: Invent Your System</h4>
-                <p>Tags are yours to define. Ideas from the community:</p>
-                <ul style="margin: 1rem 0;">
-                    <li><code>#win</code> — celebrate small victories</li>
-                    <li><code>#struggle</code> — process hard emotions</li>
-                    <li><code>#gratitude</code> — daily appreciation practice</li>
-                    <li><code>#dream</code> — track your sleep dreams</li>
-                    <li><code>#quote</code> — collect inspiring words</li>
-                </ul>
-                <p>There's no "right way." DailyNotes adapts to however you think.</p>
+                <!-- Ecosystem Item 4 -->
+                <div class="p-6 rounded-2xl bg-slate-50 border border-slate-100 hover:border-emerald-300 hover:bg-white transition-all group">
+                    <div class="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center mb-4 text-emerald-600 group-hover:scale-110 transition-transform">
+                        <i data-lucide="terminal" class="w-6 h-6"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-900">Automation</h4>
+                    <p class="text-xs text-slate-500 mt-2">Use scripts or Hazel to archive, back up, or append data automatically.</p>
+                </div>
             </div>
         </div>
     </section>
 
-    <section id="independent" style="background: var(--bg-secondary);">
-        <h2 class="section-title">Independent Notes: Beyond Daily Pages</h2>
-        <p class="section-subtitle">Sometimes a thought needs a permanent home, not just a date stamp</p>
+    <!-- Section 3: Feature Deep Dives (Tags & Independent Notes) -->
+    <section id="features" class="py-24 px-4 overflow-hidden">
+        <div class="max-w-6xl mx-auto space-y-32">
+            
+            <!-- Dynamic Tabbed Tag System -->
+            <div id="tag-tabs-container">
+                <div class="grid md:grid-cols-2 gap-12 items-start mb-16">
+                   <div class="order-1">
+                        <div class="w-12 h-12 bg-pink-50 text-pink-600 rounded-2xl flex items-center justify-center mb-6">
+                            <i data-lucide="hash" class="w-6 h-6"></i>
+                        </div>
+                        <h2 class="text-3xl font-bold mb-4">Tags connect the dots.</h2>
+                        <p class="text-slate-600 text-lg leading-relaxed mb-6">
+                            Organization that emerges from your writing, not imposed before it. 
+                            If days are the vertical timeline, tags are the horizontal threads that weave your story together.
+                        </p>
+                   </div>
+                   <!-- This area intentionally left blank as tabs will fill the full width below -->
+                </div>
 
-        <div class="feature-grid">
-            <div class="feature-card">
-                <span class="feature-icon">📚</span>
-                <h3>Create Evergreen Notes</h3>
-                <p>Not everything belongs in today's stream. Some notes are reference material, project specs, or ongoing documents.</p>
-                <p style="margin-top: 1rem;"><strong>How it works:</strong></p>
-                <ul>
-                    <li>Define custom note files in Settings</li>
-                    <li>They appear in your menu bar for instant access</li>
-                    <li>They live alongside daily notes, just not dated</li>
-                </ul>
-                <p style="margin-top: 1rem;">Example: <code>Personal Goals.md</code>, <code>Reading List.md</code>, <code>Project X Spec.md</code></p>
+                <!-- Tabbed Interface -->
+                <div class="bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                    <!-- Tab Header -->
+                    <div class="flex flex-wrap gap-1 p-2 bg-slate-100 border-b border-slate-200" id="tabs-header">
+                        <!-- Buttons injected by JS -->
+                    </div>
+
+                    <!-- Tab Content -->
+                    <div class="p-6 md:p-10 bg-white min-h-[400px] flex items-center">
+                        <div class="grid md:grid-cols-2 gap-12 items-center w-full" id="tab-content-area">
+                            <!-- Content injected by JS -->
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="feature-card">
-                <span class="feature-icon">🗂️</span>
-                <h3>Mix Flow & Structure</h3>
-                <p>The beauty of DailyNotes is choice:</p>
-                <ul>
-                    <li><strong>Daily stream</strong> for spontaneous thoughts</li>
-                    <li><strong>Independent notes</strong> for curated knowledge</li>
-                    <li>Both live in the same folder, searchable together</li>
-                </ul>
-                <p style="margin-top: 1rem;">You get the benefits of流水账 (low-friction capture) AND structured reference docs. Best of both worlds.</p>
+            <!-- Independent Notes Visual -->
+            <div class="grid md:grid-cols-2 gap-16 items-center">
+                <div>
+                    <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-6">
+                        <i data-lucide="sticky-note" class="w-6 h-6"></i>
+                    </div>
+                    <h2 class="text-3xl font-bold mb-4">Beyond the Timeline.</h2>
+                    <p class="text-slate-600 text-lg leading-relaxed mb-6">
+                        Some thoughts are timeless. <strong>Independent Notes</strong> live alongside your daily stream but aren't bound by dates. 
+                    </p>
+                    <p class="text-slate-600 mb-6">
+                        Use them for:
+                    </p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-white border border-slate-200 p-3 rounded-lg text-sm text-slate-700 flex items-center gap-2">
+                            <i data-lucide="book" class="w-4 h-4 text-brand-500"></i> Reading Lists
+                        </div>
+                        <div class="bg-white border border-slate-200 p-3 rounded-lg text-sm text-slate-700 flex items-center gap-2">
+                            <i data-lucide="code" class="w-4 h-4 text-brand-500"></i> Code Snippets
+                        </div>
+                        <div class="bg-white border border-slate-200 p-3 rounded-lg text-sm text-slate-700 flex items-center gap-2">
+                            <i data-lucide="target" class="w-4 h-4 text-brand-500"></i> Yearly Goals
+                        </div>
+                        <div class="bg-white border border-slate-200 p-3 rounded-lg text-sm text-slate-700 flex items-center gap-2">
+                            <i data-lucide="lightbulb" class="w-4 h-4 text-brand-500"></i> Drafts
+                        </div>
+                    </div>
+                </div>
+                <div class="relative">
+                    <div class="absolute inset-0 bg-emerald-500/5 rounded-3xl transform rotate-3"></div>
+                    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden relative z-10">
+                        <div class="bg-slate-50 border-b border-slate-200 px-4 py-3 flex items-center gap-2">
+                            <div class="w-3 h-3 rounded-full bg-slate-300"></div>
+                            <div class="w-3 h-3 rounded-full bg-slate-300"></div>
+                            <div class="flex-1 text-center text-xs font-mono text-slate-500">reading_list_2024.md</div>
+                        </div>
+                        <div class="p-6 font-mono text-sm leading-7 text-slate-700">
+                            <h1 class="text-xl font-bold text-slate-900 mb-4"># Reading List</h1>
+                            <ul class="list-disc pl-4 space-y-2">
+                                <li><span class="line-through text-slate-400">Atomic Habits</span></li>
+                                <li>The Pragmatic Programmer</li>
+                                <li>Deep Work</li>
+                                <li>Designing Data-Intensive Applications</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="feature-card">
-                <span class="feature-icon">🔄</span>
-                <h3>Graduate Notes</h3>
-                <p>A common workflow:</p>
-                <ul>
-                    <li>Start ideas in daily notes (fast, no commitment)</li>
-                    <li>If a topic keeps coming up, create an independent note</li>
-                    <li>Copy/consolidate related thoughts from daily stream</li>
-                    <li>The independent note becomes your "living document"</li>
-                </ul>
-                <p style="margin-top: 1rem;">Let structure emerge only when needed, not forced upfront.</p>
+        </div>
+    </section>
+
+    <!-- User Stories -->
+    <section id="stories" class="py-24 bg-white border-y border-slate-100">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <span class="text-brand-600 font-bold tracking-wider uppercase text-sm">Community</span>
+                <h2 class="text-3xl md:text-5xl font-sans font-bold mt-2 mb-4 text-slate-900">Stories from the Flow.</h2>
+                <p class="text-slate-600 text-xl leading-relaxed">Join thousands of makers who have reclaimed their mental bandwidth.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Story 1 -->
+                <div class="bg-slate-50 p-8 rounded-3xl border border-slate-100 relative">
+                    <!-- Quote Icon -->
+                    <div class="absolute -top-4 -left-2 text-6xl text-brand-100 font-serif leading-none">“</div>
+                    <div class="relative z-10">
+                        <p class="text-slate-700 leading-relaxed mb-6 font-medium">
+                            I used to spend more time setting up Notion templates than actually writing. DailyNotes freed me. <span class="bg-brand-100 text-brand-800 px-1">I just write, tag, and forget.</span> It's liberating.
+                        </p>
+                        <div class="flex items-center gap-4">
+                            <img src="https://api.dicebear.com/9.x/avataaars/svg?seed=Sarah" alt="Sarah" class="w-12 h-12 rounded-full bg-white shadow-sm">
+                            <div>
+                                <div class="font-bold text-slate-900 text-sm">Sarah J.</div>
+                                <div class="text-xs text-slate-500">Product Manager</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Story 2 -->
+                <div class="bg-slate-50 p-8 rounded-3xl border border-slate-100 relative">
+                    <div class="absolute -top-4 -left-2 text-6xl text-brand-100 font-serif leading-none">“</div>
+                    <div class="relative z-10">
+                        <p class="text-slate-700 leading-relaxed mb-6 font-medium">
+                            I pointed Cursor AI at my DailyNotes folder and asked for a 'Year in Review'. It generated a perfect summary of my achievements <span class="bg-purple-100 text-purple-800 px-1">in 60 seconds</span>.
+                        </p>
+                        <div class="flex items-center gap-4">
+                            <img src="https://api.dicebear.com/9.x/avataaars/svg?seed=Alex" alt="Alex" class="w-12 h-12 rounded-full bg-white shadow-sm">
+                            <div>
+                                <div class="font-bold text-slate-900 text-sm">Alex C.</div>
+                                <div class="text-xs text-slate-500">Senior Developer</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Story 3 -->
+                <div class="bg-slate-50 p-8 rounded-3xl border border-slate-100 relative">
+                    <div class="absolute -top-4 -left-2 text-6xl text-brand-100 font-serif leading-none">“</div>
+                    <div class="relative z-10">
+                        <p class="text-slate-700 leading-relaxed mb-6 font-medium">
+                            I didn't trust cloud apps with my deepest thoughts. Knowing my data <span class="bg-emerald-100 text-emerald-800 px-1">never leaves my Mac</span> gives me the peace of mind to be truly honest.
+                        </p>
+                        <div class="flex items-center gap-4">
+                            <img src="https://api.dicebear.com/9.x/avataaars/svg?seed=Elena" alt="Elena" class="w-12 h-12 rounded-full bg-white shadow-sm">
+                            <div>
+                                <div class="font-bold text-slate-900 text-sm">Elena R.</div>
+                                <div class="text-xs text-slate-500">Fiction Writer</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
-    <section id="features" style="background: var(--bg);">
-        <h2 class="section-title">Built for Speed & Simplicity</h2>
-        <p class="section-subtitle">Features that fade into the background until you need them</p>
+    <!-- Privacy Section -->
+    <section id="privacy" class="py-24 bg-slate-900 text-white relative overflow-hidden">
+        <div class="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+        <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-500/20 rounded-full blur-[120px] pointer-events-none"></div>
+        <div class="absolute bottom-0 left-0 w-[500px] h-[500px] bg-emerald-500/20 rounded-full blur-[120px] pointer-events-none"></div>
 
-        <div class="feature-grid">
-            <div class="feature-card">
-                <span class="feature-icon">⚡</span>
-                <h3>Menu Bar Always Ready</h3>
-                <p>DailyNotes lives in your menu bar. Click to open today's note instantly. No app switching, no friction.</p>
-            </div>
+        <div class="max-w-4xl mx-auto px-4 text-center relative z-10">
+            <h2 class="text-4xl md:text-5xl font-bold mb-16">Zero Knowledge.<br>Zero Compromise.</h2>
 
-            <div class="feature-card">
-                <span class="feature-icon">🔍</span>
-                <h3>Built-in Search (⌘S)</h3>
-                <p>Fast full-text search across all notes. Find anything by keyword, see results with context.</p>
-            </div>
-
-            <div class="feature-card">
-                <span class="feature-icon">📆</span>
-                <h3>Calendar & List Views</h3>
-                <p>Visualize your note-taking history. See which days you wrote, browse months at a glance.</p>
-            </div>
-
-            <div class="feature-card">
-                <span class="feature-icon">⌨️</span>
-                <h3>Keyboard Shortcuts</h3>
-                <p>Power-user workflows: ⌘S search, ⌘D notes folder, ⌘A @mentions, ⌘C settings.</p>
-            </div>
-
-            <div class="feature-card">
-                <span class="feature-icon">🎨</span>
-                <h3>Template Support</h3>
-                <p>Define a default template for new daily notes. Same structure every day, if you want it.</p>
-            </div>
-
-            <div class="feature-card">
-                <span class="feature-icon">🆓</span>
-                <h3>Free Forever</h3>
-                <p>No subscription, no freemium trap, no locked features. Open source, community-driven.</p>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="glass-dark p-8 rounded-3xl text-center hover:bg-white/5 transition-colors">
+                    <div class="text-5xl font-bold text-brand-400 mb-4">0</div>
+                    <h3 class="text-xl font-bold mb-2">Servers</h3>
+                    <p class="text-slate-400 text-sm">We don't have a backend. We can't see your data even if we wanted to.</p>
+                </div>
+                <div class="glass-dark p-8 rounded-3xl text-center hover:bg-white/5 transition-colors">
+                    <div class="text-5xl font-bold text-emerald-400 mb-4">100%</div>
+                    <h3 class="text-xl font-bold mb-2">Offline</h3>
+                    <p class="text-slate-400 text-sm">No internet connection required. Code in a cabin. Write on a plane.</p>
+                </div>
+                <div class="glass-dark p-8 rounded-3xl text-center hover:bg-white/5 transition-colors">
+                    <div class="text-5xl font-bold text-purple-400 mb-4">.md</div>
+                    <h3 class="text-xl font-bold mb-2">Standard Format</h3>
+                    <p class="text-slate-400 text-sm">No proprietary databases. Your data is yours, forever.</p>
+                </div>
             </div>
         </div>
     </section>
 
-    <section id="cta" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 6rem 2rem;">
-        <div style="max-width: 800px; margin: 0 auto; text-align: center;">
-            <h2 style="font-size: 3rem; margin-bottom: 1.5rem;">Ready to Let Your Thoughts Flow?</h2>
-            <p style="font-size: 1.3rem; margin-bottom: 2.5rem; opacity: 0.95;">Stop organizing. Start writing. DailyNotes is waiting.</p>
-            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-                <a href="https://github.com/raywill/dailynotes/releases" class="hero-button primary" style="margin: 0;">Download for macOS</a>
-                <a href="https://github.com/raywill/dailynotes" class="hero-button secondary" style="margin: 0;">Star on GitHub ⭐</a>
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-100 py-12">
+        <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-2">
+                <div class="bg-slate-900 text-white p-1 rounded">
+                    <i data-lucide="pen-line" class="w-4 h-4"></i>
+                </div>
+                <span class="font-bold text-slate-900">DailyNotes</span>
             </div>
-            <p style="margin-top: 2rem; font-size: 0.95rem; opacity: 0.8;">macOS 10.13 or later • Free & Open Source • No account required</p>
-        </div>
-    </section>
+            
+            <div class="flex gap-8 text-sm text-slate-500 font-medium">
+                <a href="https://github.com/raywill/dailynotes" class="hover:text-slate-900 transition-colors">GitHub</a>
+                <a href="https://github.com/raywill/dailynotes/issues" class="hover:text-slate-900 transition-colors">Issues</a>
+                <a href="https://x.com/raywillhustos" class="hover:text-slate-900 transition-colors">Contact</a>
+            </div>
 
-    <footer>
-        <p>DailyNotes is crafted with ❤️ for people who value simplicity.</p>
-        <p style="margin-top: 1rem;">
-            <a href="https://github.com/raywill/dailynotes">GitHub</a> • 
-            <a href="https://github.com/raywill/dailynotes/issues">Report Issues</a> • 
-            <a href="https://github.com/raywill/dailynotes/blob/main/README.md">Documentation</a>
-        </p>
-        <p style="margin-top: 1.5rem; opacity: 0.7; font-size: 0.9rem;">© 2024 DailyNotes • MIT License</p>
+            <p class="text-sm text-slate-400">
+                MIT License. Built for privacy.
+            </p>
+        </div>
     </footer>
 
+    <!-- Init Logic -->
     <script>
-        // Smooth scrolling for anchor links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            });
-        });
-
-        // Header scroll effect
-        const header = document.getElementById('header');
-        let lastScroll = 0;
-
+        lucide.createIcons();
+        
+        // Simple Navbar Scroll Logic
+        const nav = document.querySelector('nav div div');
         window.addEventListener('scroll', () => {
-            const currentScroll = window.pageYOffset;
-            
-            if (currentScroll > 100) {
-                header.classList.add('scrolled');
+            if (window.scrollY > 50) {
+                nav.classList.add('bg-white/90');
+                nav.classList.remove('bg-white/70'); // Assuming initial state
             } else {
-                header.classList.remove('scrolled');
+                nav.classList.remove('bg-white/90');
             }
-
-            lastScroll = currentScroll;
         });
 
-        // Scroll progress indicator
-        window.addEventListener('scroll', () => {
-            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
-            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-            const scrolled = (winScroll / height) * 100;
-            document.getElementById('scrollIndicator').style.width = scrolled + '%';
-        });
+        // Tag Tabs Logic
+        const tagData = [
+            {
+                id: 'basic',
+                label: 'The Basics',
+                icon: 'hash',
+                title: 'Just Write Naturally',
+                desc: 'No setup required. Just add # before any word in your notes. Later, right-click the menu bar icon to see all notes with that tag.',
+                code: `
+# Meeting with Design Team
+Discussed <span class="syntax-tag">#roadmap</span> and <span class="syntax-tag">#UI</span> revisions.
 
-        // Fade in animation on scroll
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -100px 0px'
+<span class="syntax-tag">#todo</span>: Send mockups to stakeholders
+<span class="syntax-tag">#idea</span>: Maybe use a darker shade for the sidebar?
+
+<span class="syntax-tag">#note</span> Deployment Checklist
+1. Run test suite (unit + integration)
+2. Build production assets
+3. Deploy to staging
+    `
+            },
+            {
+                id: 'reports',
+                label: 'Auto Reports',
+                icon: 'calendar',
+                title: 'Your Custom Summaries',
+                desc: 'Configure any tag to generate periodic reports. Set it once in Settings, then get one-click access forever.',
+                code: `
+<span class="syntax-comment">// Examples of Auto-Reports:</span>
+
+<span class="syntax-tag">#todo</span> weekly     <span class="syntax-comment">→ every week's tasks</span>
+<span class="syntax-tag">#meeting</span> 30 days <span class="syntax-comment">→ last month's meetings</span>
+<span class="syntax-tag">#idea</span> 1 year     <span class="syntax-comment">→ annual idea archive</span>
+<span class="syntax-tag">#health</span> 7 days   <span class="syntax-comment">→ weekly health tracking</span>
+                `
+            },
+            {
+                id: 'projects',
+                label: 'Projects',
+                icon: 'target',
+                title: 'Lightweight Management',
+                desc: 'Use tags as micro-project trackers. Generate a report to see the entire project timeline—notes, todos, decisions—all in context.',
+                code: `
+<span class="syntax-tag">#project-apollo</span> Status: In Progress
+
+<span class="syntax-tag">#todo</span>: Finalize API spec for <span class="syntax-tag">#project-apollo</span>
+<span class="syntax-tag">#todo</span>: Review security audit
+<span class="syntax-tag">#note</span>: Client wants faster timeline
+                `
+            },
+            {
+                id: 'knowledge',
+                label: 'Knowledge',
+                icon: 'brain',
+                title: 'Connect the Dots',
+                desc: 'Tags help you see patterns over time. After months, a #learning report shows your intellectual journey.',
+                code: `
+<span class="syntax-tag">#learning</span>: Rust ownership model is tricky but safe.
+<span class="syntax-tag">#insight</span>: The bottleneck is in the DB I/O.
+<span class="syntax-tag">#resource</span>: https://rust-lang.org/book
+<span class="syntax-tag">#question</span>: How does async runtime actually work?
+                `
+            },
+            {
+                id: 'people',
+                label: 'People',
+                icon: 'users',
+                title: 'Never Forget a Detail',
+                desc: 'Use @ tags to track interactions. The built-in @Someone report surfaces all mentions from the past month.',
+                code: `
+Coffee with <span class="syntax-tag">@alice</span>
+
+Discussed <span class="syntax-tag">#startup</span> idea for AI tools.
+She mentioned she knows a good VC.
+
+<span class="syntax-tag">#todo</span>: Send <span class="syntax-tag">@alice</span> the investor deck.
+                `
+            },
+            {
+                id: 'creative',
+                label: 'Creative',
+                icon: 'palette',
+                title: 'Invent Your System',
+                desc: 'There is no "right way." DailyNotes adapts to however you think. Track emotions, dreams, or wins.',
+                code: `
+<span class="syntax-tag">#win</span>: Finally fixed that race condition! 
+<span class="syntax-tag">#gratitude</span>: Beautiful sunset today.
+<span class="syntax-tag">#dream</span>: Flying over a neon city...
+<span class="syntax-tag">#quote</span>: "Simplicity is the ultimate sophistication."
+                `
+            }
+        ];
+
+        const tabsHeader = document.getElementById('tabs-header');
+        const tabsContent = document.getElementById('tab-content-area');
+        let activeTab = 0;
+
+        function renderTabs() {
+            // Render Headers
+            tabsHeader.innerHTML = tagData.map((tab, index) => `
+                <button 
+                    onclick="switchTab(${index})"
+                    class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                        activeTab === index 
+                        ? 'bg-white shadow-sm text-brand-600 ring-1 ring-slate-200/50' 
+                        : 'text-slate-500 hover:text-slate-800 hover:bg-white/50'
+                    }"
+                >
+                    <i data-lucide="${tab.icon}" class="w-4 h-4"></i>
+                    ${tab.label}
+                </button>
+            `).join('');
+            
+            // Re-initialize icons for new DOM elements
+            lucide.createIcons();
+
+            // Render Content
+            const current = tagData[activeTab];
+            tabsContent.innerHTML = `
+                <div class="animate-fade-in space-y-6">
+                    <div>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-50 text-brand-700 text-xs font-bold uppercase tracking-widest mb-4">
+                            ${current.label}
+                        </div>
+                        <h3 class="text-3xl font-bold text-slate-900 mb-4">${current.title}</h3>
+                        <p class="text-lg text-slate-600 leading-relaxed">${current.desc}</p>
+                    </div>
+                    <div class="flex items-center gap-2 text-sm text-slate-400 font-medium">
+                        <i data-lucide="keyboard" class="w-4 h-4"></i>
+                        <span>Try it now in the editor view</span>
+                    </div>
+                </div>
+
+                <div class="animate-fade-in relative group">
+                     <!-- Window Controls -->
+                    <div class="absolute top-0 left-0 right-0 h-10 bg-slate-100 rounded-t-xl border-b border-slate-200 flex items-center px-4 gap-2 z-10">
+                        <div class="w-3 h-3 rounded-full bg-red-400"></div>
+                        <div class="w-3 h-3 rounded-full bg-amber-400"></div>
+                        <div class="w-3 h-3 rounded-full bg-green-400"></div>
+                        <div class="ml-4 text-xs font-mono text-slate-400">dailynotes-preview.md</div>
+                    </div>
+                    
+                    <!-- Editor Body -->
+                    <div class="bg-white rounded-xl shadow-xl border border-slate-200 pt-14 pb-8 px-8 font-mono text-sm leading-relaxed text-slate-700 min-h-[260px] relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-8 bottom-0 bg-slate-50 border-r border-slate-100 flex flex-col items-center pt-14 text-slate-300 select-none">
+                            <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span>
+                        </div>
+                        <div class="pl-4 whitespace-pre-wrap">${current.code.trim()}</div>
+                        
+                        <!-- Cursor Animation -->
+                        <div class="absolute bottom-8 right-8 w-2 h-4 bg-brand-500 animate-pulse"></div>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        // Global function for onclick
+        window.switchTab = (index) => {
+            activeTab = index;
+            renderTabs();
         };
 
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.opacity = '1';
-                    entry.target.style.transform = 'translateY(0)';
-                }
-            });
-        }, observerOptions);
-
-        // Observe all feature cards and sections
-        document.querySelectorAll('.feature-card, .tag-example, .philosophy-point').forEach(el => {
-            el.style.opacity = '0';
-            el.style.transform = 'translateY(30px)';
-            el.style.transition = 'all 0.6s ease';
-            observer.observe(el);
-        });
+        // Initial render
+        renderTabs();
     </script>
+<script type="module" src="/index.tsx"></script>
 </body>
 </html>
