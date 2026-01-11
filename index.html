@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DailyNotes - Embrace the Flow of Thoughts</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --bg: #ffffff;
+            --bg-secondary: #f9fafb;
+            --border: #e5e7eb;
+            --accent: #10b981;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background: var(--bg);
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        header.scrolled {
+            box-shadow: 0 4px 20px var(--shadow);
+        }
+
+        nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo::before {
+            content: "📝";
+            font-size: 1.8rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .cta-button {
+            padding: 0.75rem 1.5rem;
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .cta-button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 10rem 2rem 6rem;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg width="60" height="60" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h60v60H0z" fill="none"/><path d="M30 0v60M0 30h60" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></svg>');
+            opacity: 0.3;
+        }
+
+        .hero-content {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            opacity: 0.95;
+            animation: fadeInUp 0.8s ease 0.2s backwards;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            animation: fadeInUp 0.8s ease 0.4s backwards;
+        }
+
+        .hero-button {
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-size: 1.1rem;
+        }
+
+        .hero-button.primary {
+            background: white;
+            color: var(--primary);
+        }
+
+        .hero-button.primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .hero-button.secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+        }
+
+        .hero-button.secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Sections */
+        section {
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        section:nth-child(even) {
+            background: var(--bg-secondary);
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 1rem;
+            color: var(--text);
+        }
+
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            color: var(--text-light);
+            margin-bottom: 4rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Philosophy Section */
+        .philosophy-content {
+            max-width: 800px;
+            margin: 0 auto;
+            font-size: 1.15rem;
+            line-height: 1.8;
+        }
+
+        .philosophy-highlight {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2.5rem;
+            border-radius: 16px;
+            margin: 2rem 0;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
+        }
+
+        .philosophy-highlight h3 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .philosophy-points {
+            display: grid;
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .philosophy-point {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary);
+            box-shadow: 0 2px 8px var(--shadow);
+            transition: all 0.3s;
+        }
+
+        .philosophy-point:hover {
+            transform: translateX(8px);
+            box-shadow: 0 4px 16px var(--shadow);
+        }
+
+        .philosophy-point h4 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        /* Feature Cards */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px var(--shadow);
+            transition: all 0.3s;
+            border: 1px solid var(--border);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text);
+        }
+
+        .feature-card p {
+            color: var(--text-light);
+            line-height: 1.7;
+        }
+
+        .feature-card ul {
+            margin-top: 1rem;
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .feature-card li {
+            padding: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+            color: var(--text-light);
+        }
+
+        .feature-card li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        /* Privacy Section */
+        .privacy-banner {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 3rem;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(16, 185, 129, 0.2);
+        }
+
+        .privacy-banner h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .privacy-banner p {
+            font-size: 1.2rem;
+            opacity: 0.95;
+            margin-bottom: 2rem;
+        }
+
+        .privacy-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .privacy-item {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .privacy-item-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .privacy-item h4 {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Tag System */
+        .tag-examples {
+            display: grid;
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .tag-example {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            border: 2px solid var(--border);
+            transition: all 0.3s;
+        }
+
+        .tag-example:hover {
+            border-color: var(--primary);
+            box-shadow: 0 8px 24px var(--shadow);
+        }
+
+        .tag-example h4 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .tag-code {
+            background: #1f2937;
+            color: #10b981;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--text);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        footer a:hover {
+            color: #60a5fa;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            opacity: 0;
+            animation: fadeInUp 0.8s ease forwards;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero p {
+                font-size: 1.1rem;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+
+            section {
+                padding: 4rem 1.5rem;
+            }
+        }
+
+        /* Scroll indicator */
+        .scroll-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            z-index: 10000;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="scroll-indicator" id="scrollIndicator"></div>
+
+    <header id="header">
+        <nav>
+            <a href="#" class="logo">DailyNotes</a>
+            <ul class="nav-links">
+                <li><a href="#philosophy">Philosophy</a></li>
+                <li><a href="#openness">Openness</a></li>
+                <li><a href="#privacy">Privacy</a></li>
+                <li><a href="#tags">Tags</a></li>
+            </ul>
+            <a href="https://github.com/raywill/dailynotes" class="cta-button">Get Started</a>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Embrace the Flow of Thoughts</h1>
+            <p>Stop organizing. Stop categorizing. Just write. DailyNotes flows like a stream — each day is a fresh page, no mental overhead.</p>
+            <div class="hero-buttons">
+                <a href="https://github.com/raywill/dailynotes/releases" class="hero-button primary">Download for macOS</a>
+                <a href="https://github.com/raywill/dailynotes" class="hero-button secondary">View on GitHub</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="philosophy">
+        <h2 class="section-title">The Philosophy: Let It Flow</h2>
+        <p class="section-subtitle">The best note-taking system is one you actually use</p>
+        
+        <div class="philosophy-content">
+            <div class="philosophy-highlight">
+                <h3>🌊 Notes Are a Stream, Not a Library</h3>
+                <p>DailyNotes was born from a simple realization: the friction of organizing notes kills the habit of taking them. We spend more time deciding "where does this go?" than actually capturing thoughts.</p>
+            </div>
+
+            <div class="philosophy-points">
+                <div class="philosophy-point">
+                    <h4>No Folders, No Categories, No Decisions</h4>
+                    <p>Every day starts with a blank page. Yesterday's thoughts are yesterday. Today is today. This temporal organization is the only structure you need — it's automatic, effortless, and mirrors how life actually flows.</p>
+                </div>
+
+                <div class="philosophy-point">
+                    <h4>Zero Mental Overhead</h4>
+                    <p>Open DailyNotes. Write. That's it. No "Should this be in Projects or Personal?" No "Do I create a new folder?" No "Let me reorganize this later." The lowest barrier to capture means you'll actually capture everything.</p>
+                </div>
+
+                <div class="philosophy-point">
+                    <h4>Let Tags Emerge Naturally</h4>
+                    <p>Organization isn't gone — it's just inverted. Instead of pre-planning categories, you use tags inline (#todo, #idea, #meeting). They emerge from your natural workflow. Later, DailyNotes can surface all #meeting notes from the past month with one click.</p>
+                </div>
+
+                <div class="philosophy-point">
+                    <h4>Trust Search, Not Structure</h4>
+                    <p>Your brain is good at remembering context ("it was around last Tuesday") and keywords. DailyNotes gives you powerful search and calendar views. You don't need perfect organization — you need good retrieval.</p>
+                </div>
+
+                <div class="philosophy-point">
+                    <h4>Embrace Impermanence</h4>
+                    <p>Not every note needs to be永恒. Most notes are scaffolding — useful for a week, a project, a moment. By keeping notes in a daily stream, you naturally let old, irrelevant content fade into the archive. It's still there if you need it, but it's not cluttering your mind.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="openness">
+        <h2 class="section-title">Radical Openness</h2>
+        <p class="section-subtitle">Your notes, your tools, your way. DailyNotes is a hub, not a prison.</p>
+
+        <div class="feature-grid">
+            <div class="feature-card">
+                <span class="feature-icon">✍️</span>
+                <h3>Use Your Favorite Editor</h3>
+                <p>DailyNotes doesn't lock you into a proprietary editor. Your notes are plain Markdown files. Open them with:</p>
+                <ul>
+                    <li><strong>Typora</strong> for beautiful WYSIWYG editing</li>
+                    <li><strong>VS Code</strong> for power-user workflows</li>
+                    <li><strong>iA Writer</strong> for distraction-free writing</li>
+                    <li><strong>Obsidian</strong> for graph views and plugins</li>
+                    <li><strong>Vim/Emacs</strong> for terminal lovers</li>
+                </ul>
+                <p style="margin-top: 1rem;">DailyNotes creates the files and generates reports. You edit them with whatever feels right today.</p>
+            </div>
+
+            <div class="feature-card">
+                <span class="feature-icon">🤖</span>
+                <h3>AI-Powered Insights with Cursor</h3>
+                <p>Your daily notes are a goldmine of patterns. Use Cursor AI to:</p>
+                <ul>
+                    <li><strong>Summarize weeks or months</strong> of notes in seconds</li>
+                    <li><strong>Extract action items</strong> across all your #todo tags</li>
+                    <li><strong>Identify recurring themes</strong> in your thinking</li>
+                    <li><strong>Generate meeting summaries</strong> from your raw notes</li>
+                    <li><strong>Find connections</strong> between ideas weeks apart</li>
+                </ul>
+                <p style="margin-top: 1rem;">Since notes are just text files, any AI tool can read them. Your DailyNotes folder is prompt-ready.</p>
+            </div>
+
+            <div class="feature-card">
+                <span class="feature-icon">☁️</span>
+                <h3>Sync with Your Cloud</h3>
+                <p>DailyNotes stores everything in <code>~/Documents/DailyNotes</code>. This means seamless sync with:</p>
+                <ul>
+                    <li><strong>iCloud Drive</strong> — automatic on macOS</li>
+                    <li><strong>Dropbox</strong> — sync across all devices</li>
+                    <li><strong>Google Drive</strong> — backup to the cloud</li>
+                    <li><strong>Git</strong> — version control for note nerds</li>
+                    <li><strong>Syncthing</strong> — decentralized, private sync</li>
+                </ul>
+                <p style="margin-top: 1rem;">Your sync strategy, your choice. DailyNotes doesn't dictate or interfere.</p>
+            </div>
+
+            <div class="feature-card">
+                <span class="feature-icon">🔍</span>
+                <h3>Search with Alfred/Raycast</h3>
+                <p>Supercharge your note retrieval:</p>
+                <ul>
+                    <li>Add <code>~/Documents/DailyNotes</code> to Alfred's search scope</li>
+                    <li>Instant full-text search across all notes</li>
+                    <li>Open any note with a keyboard shortcut</li>
+                    <li>Jump to today's note in 0.5 seconds</li>
+                </ul>
+                <p style="margin-top: 1rem;">DailyNotes has built-in search (⌘S), but power users can go even faster with launcher integration.</p>
+            </div>
+
+            <div class="feature-card">
+                <span class="feature-icon">📊</span>
+                <h3>Analyze with Scripts</h3>
+                <p>Your notes folder is a data source. Write scripts to:</p>
+                <ul>
+                    <li><strong>Count your productivity</strong> — how many #todo items per week?</li>
+                    <li><strong>Track habits</strong> — did I write #exercise notes this month?</li>
+                    <li><strong>Generate charts</strong> — visualize note-taking patterns</li>
+                    <li><strong>Build custom reports</strong> — way beyond what DailyNotes generates</li>
+                </ul>
+                <p style="margin-top: 1rem;">Plain text is programmable. Your imagination is the limit.</p>
+            </div>
+
+            <div class="feature-card">
+                <span class="feature-icon">🔗</span>
+                <h3>Integrate with Everything</h3>
+                <p>Because notes are just files, they play nice with:</p>
+                <ul>
+                    <li><strong>Hazel</strong> — auto-organize or archive old notes</li>
+                    <li><strong>Keyboard Maestro</strong> — macro workflows</li>
+                    <li><strong>Shortcuts (iOS/macOS)</strong> — quick-add from anywhere</li>
+                    <li><strong>DEVONthink</strong> — knowledge management</li>
+                    <li><strong>Notion/Evernote</strong> — import when you need richer structure</li>
+                </ul>
+                <p style="margin-top: 1rem;">DailyNotes doesn't compete with your ecosystem — it amplifies it.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="privacy" style="background: var(--bg);">
+        <div class="privacy-banner">
+            <h2>🔒 Your Notes, Your Privacy</h2>
+            <p>Zero data collection. Zero cloud uploads. Zero tracking. Zero compromise.</p>
+        </div>
+
+        <div class="privacy-features">
+            <div class="privacy-item">
+                <span class="privacy-item-icon">💾</span>
+                <h4>100% Local Storage</h4>
+                <p>Every note stays on your Mac. DailyNotes never phones home, never uploads, never syncs to our servers. Because we don't have servers.</p>
+            </div>
+
+            <div class="privacy-item">
+                <span class="privacy-item-icon">🚫</span>
+                <h4>No Telemetry</h4>
+                <p>We don't know what you write. We don't know how often you write. We don't even know you're using DailyNotes. Your usage is invisible to us.</p>
+            </div>
+
+            <div class="privacy-item">
+                <span class="privacy-item-icon">🔓</span>
+                <h4>No Lock-In</h4>
+                <p>Your notes are Markdown files in a folder. No database, no proprietary format, no export needed. Stop using DailyNotes tomorrow, and your notes are still perfectly readable.</p>
+            </div>
+
+            <div class="privacy-item">
+                <span class="privacy-item-icon">🛡️</span>
+                <h4>Open Source</h4>
+                <p>Verify our privacy claims yourself. Every line of code is on GitHub. No secrets, no backdoors, no hidden agendas.</p>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 3rem; font-size: 1.2rem; color: var(--text-light);">
+            <p><strong>In an age of data collection and surveillance capitalism, DailyNotes is a sanctuary.</strong></p>
+            <p style="margin-top: 1rem;">Write freely. Think freely. Your thoughts are yours alone.</p>
+        </div>
+    </section>
+
+    <section id="tags">
+        <h2 class="section-title">The Tag System: Power in Simplicity</h2>
+        <p class="section-subtitle">Organization that emerges from your writing, not imposed before it</p>
+
+        <div class="tag-examples">
+            <div class="tag-example">
+                <h4>📝 Basic Tagging: Write Naturally</h4>
+                <p>Just add # before any word in your notes. No setup, no configuration:</p>
+                <div class="tag-code"># Meeting with Design Team<br>Discussed #roadmap and #UI revisions<br>#todo: Send mockups to stakeholders</div>
+                <p style="margin-top: 1rem;">Later, right-click the DailyNotes menu bar icon → search for #roadmap → see all roadmap discussions across months.</p>
+            </div>
+
+            <div class="tag-example">
+                <h4>📅 Time-Based Reports: Your Custom Summaries</h4>
+                <p>Configure any tag to generate periodic reports. Examples:</p>
+                <ul style="margin: 1rem 0;">
+                    <li><code>#todo weekly</code> — every week's tasks in one view</li>
+                    <li><code>#meeting 30 days</code> — last month of meetings</li>
+                    <li><code>#idea 1 year</code> — your annual idea archive</li>
+                    <li><code>#health 7 days</code> — track weekly health notes</li>
+                </ul>
+                <p>Set it once in Settings, then one-click access forever. No manual work.</p>
+            </div>
+
+            <div class="tag-example">
+                <h4>🎯 Project Management: Lightweight & Powerful</h4>
+                <p>Use tags as micro-project trackers:</p>
+                <div class="tag-code">#project-apollo Status: In Progress<br>#todo: Finalize API spec<br>#todo: Review security audit<br>#note: Client wants faster timeline</div>
+                <p style="margin-top: 1rem;">Generate a <code>#project-apollo 90 days</code> report to see the entire project timeline — notes, todos, decisions — all in context.</p>
+            </div>
+
+            <div class="tag-example">
+                <h4>🧠 Knowledge Building: Connect the Dots</h4>
+                <p>Tags help you see patterns over time:</p>
+                <ul style="margin: 1rem 0;">
+                    <li><code>#learning</code> — all knowledge you've captured</li>
+                    <li><code>#insight</code> — breakthrough moments</li>
+                    <li><code>#question</code> — curiosities to explore</li>
+                    <li><code>#resource</code> — useful links and references</li>
+                </ul>
+                <p>After months, a <code>#learning 1 year</code> report shows your intellectual journey. Patterns emerge you never noticed day-to-day.</p>
+            </div>
+
+            <div class="tag-example">
+                <h4>👥 People & Relationships</h4>
+                <p>Use @ tags to track conversations and interactions:</p>
+                <div class="tag-code"># Coffee with @alice<br>Discussed #startup idea for AI tools<br>#todo: Send her the investor deck</div>
+                <p style="margin-top: 1rem;">DailyNotes has a built-in <code>@Someone</code> report (⌘A) that surfaces all @ mentions from the past month. Never forget what you discussed.</p>
+            </div>
+
+            <div class="tag-example">
+                <h4>🎨 Creative Freedom: Invent Your System</h4>
+                <p>Tags are yours to define. Ideas from the community:</p>
+                <ul style="margin: 1rem 0;">
+                    <li><code>#win</code> — celebrate small victories</li>
+                    <li><code>#struggle</code> — process hard emotions</li>
+                    <li><code>#gratitude</code> — daily appreciation practice</li>
+                    <li><code>#dream</code> — track your sleep dreams</li>
+                    <li><code>#quote</code> — collect inspiring words</li>
+                </ul>
+                <p>There's no "right way." DailyNotes adapts to however you think.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="independent" style="background: var(--bg-secondary);">
+        <h2 class="section-title">Independent Notes: Beyond Daily Pages</h2>
+        <p class="section-subtitle">Sometimes a thought needs a permanent home, not just a date stamp</p>
+
+        <div class="feature-grid">
+            <div class="feature-card">
+                <span class="feature-icon">📚</span>
+                <h3>Create Evergreen Notes</h3>
+                <p>Not everything belongs in today's stream. Some notes are reference material, project specs, or ongoing documents.</p>
+                <p style="margin-top: 1rem;"><strong>How it works:</strong></p>
+                <ul>
+                    <li>Define custom note files in Settings</li>
+                    <li>They appear in your menu bar for instant access</li>
+                    <li>They live alongside daily notes, just not dated</li>
+                </ul>
+                <p style="margin-top: 1rem;">Example: <code>Personal Goals.md</code>, <code>Reading List.md</code>, <code>Project X Spec.md</code></p>
+            </div>
+
+            <div class="feature-card">
+                <span class="feature-icon">🗂️</span>
+                <h3>Mix Flow & Structure</h3>
+                <p>The beauty of DailyNotes is choice:</p>
+                <ul>
+                    <li><strong>Daily stream</strong> for spontaneous thoughts</li>
+                    <li><strong>Independent notes</strong> for curated knowledge</li>
+                    <li>Both live in the same folder, searchable together</li>
+                </ul>
+                <p style="margin-top: 1rem;">You get the benefits of流水账 (low-friction capture) AND structured reference docs. Best of both worlds.</p>
+            </div>
+
+            <div class="feature-card">
+                <span class="feature-icon">🔄</span>
+                <h3>Graduate Notes</h3>
+                <p>A common workflow:</p>
+                <ul>
+                    <li>Start ideas in daily notes (fast, no commitment)</li>
+                    <li>If a topic keeps coming up, create an independent note</li>
+                    <li>Copy/consolidate related thoughts from daily stream</li>
+                    <li>The independent note becomes your "living document"</li>
+                </ul>
+                <p style="margin-top: 1rem;">Let structure emerge only when needed, not forced upfront.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" style="background: var(--bg);">
+        <h2 class="section-title">Built for Speed & Simplicity</h2>
+        <p class="section-subtitle">Features that fade into the background until you need them</p>
+
+        <div class="feature-grid">
+            <div class="feature-card">
+                <span class="feature-icon">⚡</span>
+                <h3>Menu Bar Always Ready</h3>
+                <p>DailyNotes lives in your menu bar. Click to open today's note instantly. No app switching, no friction.</p>
+            </div>
+
+            <div class="feature-card">
+                <span class="feature-icon">🔍</span>
+                <h3>Built-in Search (⌘S)</h3>
+                <p>Fast full-text search across all notes. Find anything by keyword, see results with context.</p>
+            </div>
+
+            <div class="feature-card">
+                <span class="feature-icon">📆</span>
+                <h3>Calendar & List Views</h3>
+                <p>Visualize your note-taking history. See which days you wrote, browse months at a glance.</p>
+            </div>
+
+            <div class="feature-card">
+                <span class="feature-icon">⌨️</span>
+                <h3>Keyboard Shortcuts</h3>
+                <p>Power-user workflows: ⌘S search, ⌘D notes folder, ⌘A @mentions, ⌘C settings.</p>
+            </div>
+
+            <div class="feature-card">
+                <span class="feature-icon">🎨</span>
+                <h3>Template Support</h3>
+                <p>Define a default template for new daily notes. Same structure every day, if you want it.</p>
+            </div>
+
+            <div class="feature-card">
+                <span class="feature-icon">🆓</span>
+                <h3>Free Forever</h3>
+                <p>No subscription, no freemium trap, no locked features. Open source, community-driven.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="cta" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 6rem 2rem;">
+        <div style="max-width: 800px; margin: 0 auto; text-align: center;">
+            <h2 style="font-size: 3rem; margin-bottom: 1.5rem;">Ready to Let Your Thoughts Flow?</h2>
+            <p style="font-size: 1.3rem; margin-bottom: 2.5rem; opacity: 0.95;">Stop organizing. Start writing. DailyNotes is waiting.</p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <a href="https://github.com/raywill/dailynotes/releases" class="hero-button primary" style="margin: 0;">Download for macOS</a>
+                <a href="https://github.com/raywill/dailynotes" class="hero-button secondary" style="margin: 0;">Star on GitHub ⭐</a>
+            </div>
+            <p style="margin-top: 2rem; font-size: 0.95rem; opacity: 0.8;">macOS 10.13 or later • Free & Open Source • No account required</p>
+        </div>
+    </section>
+
+    <footer>
+        <p>DailyNotes is crafted with ❤️ for people who value simplicity.</p>
+        <p style="margin-top: 1rem;">
+            <a href="https://github.com/raywill/dailynotes">GitHub</a> • 
+            <a href="https://github.com/raywill/dailynotes/issues">Report Issues</a> • 
+            <a href="https://github.com/raywill/dailynotes/blob/main/README.md">Documentation</a>
+        </p>
+        <p style="margin-top: 1.5rem; opacity: 0.7; font-size: 0.9rem;">© 2024 DailyNotes • MIT License</p>
+    </footer>
+
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Header scroll effect
+        const header = document.getElementById('header');
+        let lastScroll = 0;
+
+        window.addEventListener('scroll', () => {
+            const currentScroll = window.pageYOffset;
+            
+            if (currentScroll > 100) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+
+            lastScroll = currentScroll;
+        });
+
+        // Scroll progress indicator
+        window.addEventListener('scroll', () => {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById('scrollIndicator').style.width = scrolled + '%';
+        });
+
+        // Fade in animation on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe all feature cards and sections
+        document.querySelectorAll('.feature-card, .tag-example, .philosophy-point').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'all 0.6s ease';
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
