@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Search</title>
+    <title data-i18n="search.title">Search</title>
     <style>
       body {
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
@@ -88,13 +88,13 @@
   </head>
   <body>
     <div class="dialog">
-      <h2>Search</h2>
+      <h2 data-i18n="search.title">Search</h2>
       <div class="input-group">
-        <label for="query">Enter search query:</label>
-        <input type="text" id="query" placeholder="Type your query here" />
+        <label for="query" data-i18n="search.placeholder">Enter search query:</label>
+        <input type="text" id="query" placeholder="Type your query here" data-i18n="placeholder=search.placeholder" />
       </div>
       <div class="input-group">
-        <button id="search">Search</button>
+        <button id="search" data-i18n="search.searchButton">Search</button>
       </div>
       <div class="result" id="result">
         <!-- Search results will be displayed here -->

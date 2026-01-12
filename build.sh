@@ -1,1 +1,2 @@
-npx electron-packager ./ --platform=darwin --arch=x64 --out=dist --icon=./icon.icns --overwrite --electron-version=25.1.0 && asar pack dist/DailyNotes-darwin-x64/DailyNotes.app/Contents/Resources/app dist/DailyNotes-darwin-x64/DailyNotes.app/Contents/Resources/app.asar && rm -fr dist/DailyNotes-darwin-x64/DailyNotes.app/Contents/Resources/app
+npm run build:mas
+

@@ -9,12 +9,10 @@ const {
   BrowserWindow,
   systemPreferences,
 } = require("electron");
-const { spawn } = require("child_process");
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
-const http = require("http");
-const { execFile } = require("child_process");
+const i18n = require("./i18n");
 
 const iconPath = path.join(__dirname, "icon.png");
 let appIcon = null;
@@ -28,10 +26,7 @@ var configName = path.join(app.getPath("userData"), "config.json");
 var tempDirName = app.getPath("temp");
 var fileExtension = "md"; // default file format
 var newPageTemplate = ""; // default page template, such as '##todo work for today'
-var customizedEditorApplication = ""; // user defined application to open the editor
 var userDefinedFiles = [];
-var telemetryHost = "m.reactshare.cn";
-var telemetryEndpoint = "/dailynotes/?";
 var lastFile = ""; // remember last opened file. activate it again when click app icon
 
 function getCurrentDate() {
@@ -57,16 +52,16 @@ function getDeltaDateWithWeekDay(delta) {
   const year = date.getFullYear();
   const month = (date.getMonth() + 1).toString().padStart(2, "0");
   const day = date.getDate().toString().padStart(2, "0");
-  const weekdays = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
+  const weekdayKeys = [
+    "weekdays.sunday",
+    "weekdays.monday",
+    "weekdays.tuesday",
+    "weekdays.wednesday",
+    "weekdays.thursday",
+    "weekdays.friday",
+    "weekdays.saturday",
   ];
-  const weekday = weekdays[date.getDay()];
+  const weekday = i18n.t(weekdayKeys[date.getDay()]);
   return `${year}-${month}-${day} (${weekday})`;
 }
 
@@ -76,115 +71,48 @@ function getDeltaWeekDay(delta) {
   return date.getDay();
 }
 
-var openTerminal = function () {
-  const atPath = dirName;
-  let openTerminalAtPath = spawn("open", ["-a", "Terminal", atPath]);
-  openTerminalAtPath.on("error", (err) => {
-    console.log(err);
-  });
-};
-
 var openTextFile = function (fName) {
   var fileName = path.join(dirName, fName);
-  fs.exists(dirName, (exists) => {
-    if (!exists) {
-      fs.mkdirSync(dirName);
-      var firstWord =
-        "\n#note Welcome to use DailyNotes\n\n" +
-        " - For those enjoy simplicity!\n" +
-        " - For those want complete content control!\n" +
-        " - Visit https://www.github.com/raywill/dailynotes for update!\n" +
-        "\n" +
-        "\n" +
-        "#todo work for today:\n" +
-        "\n" +
-        " - Check and respond to emails from clients and team members.\n" +
-        " - Attend the daily stand-up meeting with the team to discuss progress and plans.\n" +
-        " - Review and update the project requirements and user stories based on the feedback received.\n" +
-        " - Start working on implementing new features or fixing existing bugs.\n" +
-        " - Write and test code, and document it properly.\n" +
-        " - Conduct code reviews and provide feedback to other team members.\n" +
-        " - Attend meetings with clients to discuss project progress and gather feedback.\n" +
-        " - Update project management tools and trackers with the latest information.\n" +
-        " - Take breaks regularly to avoid burnout and ensure productivity.\n" +
-        " - Learn new technologies or programming languages to enhance skills and knowledge.\n" +
-        "\n" +
-        "\n" +
-        "#note Using the markdown viewer **Typora** to view weekly reports is strongly recommended!!\n" +
-        "\n" +
-        "\n" +
-        "#todo Begin your work here...\n";
-      fs.writeFileSync(fileName, firstWord, "utf8");
-    }
-    fs.access(fileName, fs.constants.F_OK, (err) => {
-      if (err) {
-        fs.writeFile(fileName, newPageTemplate, "utf8", (err) => {
-          if (err) {
-            console.warn("创建文件失败");
-          } else {
-            console.warn("创建文件成功");
-            shellOpenPath(fileName);
-          }
-        });
-      } else {
-        console.log("文件存在");
-        shellOpenPath(fileName);
-      }
-    });
-  });
-  hookTelemetry(fName);
+  if (!fs.existsSync(dirName)) {
+    fs.mkdirSync(dirName, { recursive: true });
+    var firstWord =
+      "\n" + i18n.t("welcome.noteTitle") + "\n\n" +
+      i18n.t("welcome.intro1") + "\n" +
+      i18n.t("welcome.intro2") + "\n" +
+      i18n.t("welcome.intro3") + "\n" +
+      "\n" +
+      "\n" +
+      i18n.t("welcome.todoTitle") + "\n" +
+      "\n" +
+      i18n.t("welcome.todo1") + "\n" +
+      i18n.t("welcome.todo2") + "\n" +
+      i18n.t("welcome.todo3") + "\n" +
+      i18n.t("welcome.todo4") + "\n" +
+      i18n.t("welcome.todo5") + "\n" +
+      i18n.t("welcome.todo6") + "\n" +
+      i18n.t("welcome.todo7") + "\n" +
+      i18n.t("welcome.todo8") + "\n" +
+      i18n.t("welcome.todo9") + "\n" +
+      i18n.t("welcome.todo10") + "\n" +
+      "\n" +
+      "\n" +
+      i18n.t("welcome.typoraNote") + "\n" +
+      "\n" +
+      "\n" +
+      i18n.t("welcome.beginWork") + "\n";
+    fs.writeFileSync(fileName, firstWord, "utf8");
+  }
+  
+  if (!fs.existsSync(fileName)) {
+    fs.writeFileSync(fileName, newPageTemplate, "utf8");
+  }
+  shellOpenPath(fileName);
 };
 
-var lastTeleReportTime = 0;
+// Telemetry disabled for App Store compliance
 
-var hookTelemetry = function (data) {
-  const ms = new Date().getTime();
-  if (lastTeleReportTime + 1000 * 60 > ms) {
-    return;
-  }
-  try {
-    lastTeleReportTime = ms;
-    // OS version lookup https://en.wikipedia.org/wiki/Darwin_(operating_system)#Release_history
-    var params = encodeURIComponent(
-      [
-        os.platform(),
-        os.machine(),
-        os.release(),
-        os.userInfo().username,
-        app.getVersion(),
-        data,
-      ].join("-"),
-    );
-    var req = http.get(
-      {
-        hostname: telemetryHost,
-        path: telemetryEndpoint + params,
-        port: 80,
-        timeout: 3000,
-        webSecurity: false,
-      },
-      (res) => {},
-    );
-    req.on("error", (err) => {
-      // nop
-    });
-  } catch {
-    // nop
-  }
-};
-
-var shellOpenPath = function (fileName, lineNo = 0) {
-  if (lineNo > 0 && customizedEditorApplication != "") {
-    // check application type
-    if (customizedEditorApplication.indexOf("Visual\ Studio\ Code.app") > 0) {
-      // for now, only vs code supported
-      execFile(customizedEditorApplication, ["-g", fileName + ":" + lineNo]);
-    } else {
-      shell.openPath(fileName);
-    }
-  } else {
-    shell.openPath(fileName);
-  }
+var shellOpenPath = function (fileName) {
+  shell.openPath(fileName);
   lastFile = fileName;
 };
 
@@ -225,28 +153,20 @@ var writeAndOpenReportFile = function (fNamePrefix, content) {
   // var reportDirName = tempDirName;
   var fName = fNamePrefix + ".md";
   var fileName = path.join(reportDirName, fName);
-  fs.exists(reportDirName, (exists) => {
-    if (!exists) {
-      console.warn("找不到临时文件夹");
-    } else {
-      fs.access(fileName, fs.constants.F_OK, (err) => {
-        fs.writeFile(fileName, content, "utf8", (err) => {
-          if (err) {
-            console.warn("创建报告文件失败");
-          } else {
-            console.warn("写入报告文件成功");
-            shellOpenPath(fileName);
-          }
-        });
-      });
-    }
-  });
+  
+  if (!fs.existsSync(reportDirName)) {
+    console.warn(i18n.t("dialog.selectNotesDirectory"));
+    return;
+  }
+  
+  fs.writeFileSync(fileName, content, "utf8");
+  shellOpenPath(fileName);
 };
 
 var readFile = function (fileName, cb) {
   fs.readFile(fileName, "utf8", (err, data) => {
     if (err) {
-      console.warn("创建文件失败");
+      console.warn(i18n.t("dialog.selectNotesDirectory"));
     } else {
       cb(data);
     }
@@ -311,8 +231,6 @@ var openLastDaysSummary = function (delta) {
     let fNamePrefix = "dailynotes_report"; //type + "-" + delta.toString();
     writeAndOpenReportFile(fNamePrefix, results);
   });
-  const type = "lastdayssummary";
-  hookTelemetry(type + delta);
 };
 
 var openLastWeekSummary = function () {
@@ -339,11 +257,11 @@ var openListView = function () {
         }
       });
 
-      lineResults += "## Recent 180 days List View\n\n";
-      lineResults += "> Use 'Command + Click' to quick open the note\n\n";
-      lineResults += "| Brief |\n";
-      lineResults += "| ------ |\n";
-
+      results += i18n.t("report.listViewTitle") + "\n\n";
+      results += i18n.t("report.listViewTip") + "\n\n";
+      results += i18n.t("report.tableHeader") + "\n";
+      results += i18n.t("report.tableSeparator") + "\n";
+      
       for (var i = 0; i >= offset; i--) {
         var date = getDeltaDate(i);
         var fileResult = "";
@@ -355,18 +273,16 @@ var openListView = function () {
           let match;
           while ((match = regex.exec(content)) !== null) {
             var line =
-              "|[" + date + "](" + fName + "): " + match[2].trim() + "|\n";
+              "|[" + date + "](" + fName + "): " + match[2].trim() + "]\n";
             fileResult = line + fileResult;
           }
-          lineResults += fileResult;
+          results += fileResult;
         }
       }
     }
     let fNamePrefix = "dailynotes_listview"; //type + "-" + delta.toString();
-    writeAndOpenReportFile(fNamePrefix, lineResults);
+    writeAndOpenReportFile(fNamePrefix, results);
   });
-  const type = "listview";
-  hookTelemetry(type);
 };
 
 var openCalendarView = function () {
@@ -391,8 +307,8 @@ var openCalendarView = function () {
       rest = extTo; // align to Sat
 
       var rowResults = ""; // used to filter out empty week data
-      results += "## Recent 180 days Calendar View\n\n";
-      results += "> Use 'Command + Click' to quick open the note\n\n";
+      results += i18n.t("report.calendarViewTitle") + "\n\n";
+      results += i18n.t("report.calendarViewTip") + "\n\n";
       results += "| SUN  | MON | TUE | WEN | THU  | FRI | SAT |\n";
       results += "| --- | --- | --- | --- | --- | --- | --- |\n";
 
@@ -421,8 +337,6 @@ var openCalendarView = function () {
     let fNamePrefix = "dailynotes_calendar"; //type + "-" + delta.toString();
     writeAndOpenReportFile(fNamePrefix, results);
   });
-  const type = "calendar";
-  hookTelemetry(type);
 };
 
 var generateAtSomeoneReport = function (delta) {
@@ -482,8 +396,6 @@ var generateAtSomeoneReport = function (delta) {
     let fNamePrefix = "dailynotes_report"; //type + "-" + delta.toString();
     writeAndOpenReportFile(fNamePrefix, results);
   });
-  const type = "@someone";
-  hookTelemetry(type + delta);
 };
 
 var generateReport = function (type, delta) {
@@ -540,7 +452,6 @@ var generateReport = function (type, delta) {
     let fNamePrefix = "dailynotes_report"; //type + "-" + delta.toString();
     writeAndOpenReportFile(fNamePrefix, results);
   });
-  hookTelemetry(type + delta);
 };
 
 var parseLabels = function (labels) {
@@ -606,8 +517,10 @@ function createSearchDialog() {
       height: 700,
       modal: true,
       webPreferences: {
-        nodeIntegration: true,
-        contextIsolation: false,
+        preload: path.join(__dirname, "preload.js"),
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: true,
       },
     });
     searchWindow.loadFile("search-dialog.html");
@@ -724,7 +637,7 @@ function processContent(file, title, titleLineNum, lines, query, results) {
 
 function formatResults(results, query) {
   return results.map((result) => {
-    const { file, title, titleLineNum, matches } = result;
+    const { file, title, matches } = result;
 
     // 对匹配结果进行格式化
     const formattedMatches = matches
@@ -732,9 +645,7 @@ function formatResults(results, query) {
         return (
           "<a style='text-decoration:none;color:black;' href='#' onclick=\"openFile('" +
           result.file +
-          "'," +
-          match.index +
-          ');return false;">' +
+          "');return false;\">" +
           match.content.replace(
             new RegExp(`(${query})`, "giu"),
             `<b style='color:#ea4335'>$1</b>`,
@@ -747,15 +658,14 @@ function formatResults(results, query) {
     return {
       file,
       title,
-      titleLineNum,
       content: formattedMatches,
     };
   });
 }
 
-ipcMain.on("open-search-file", (event, fName, lineNo) => {
+ipcMain.on("open-search-file", (event, fName) => {
   var filePath = path.join(dirName, fName);
-  shellOpenPath(filePath, lineNo);
+  shellOpenPath(filePath);
 });
 
 // end paste
@@ -767,8 +677,41 @@ ipcMain.on('close-search-dialog', () => {
 });
 */
 
+// I18n APIs for renderer processes
+ipcMain.handle('init-i18n', (event, locale) => {
+  return i18n.init(locale);
+});
+
+ipcMain.handle('get-translation', (event, key, params = {}) => {
+  return i18n.t(key, params);
+});
+
+ipcMain.handle('get-available-locales', (event) => {
+  return i18n.getAvailableLocales();
+});
+
+ipcMain.handle('get-locale-names', (event) => {
+  return i18n.getLocaleNames();
+});
+
+ipcMain.handle('get-current-locale', (event) => {
+  return i18n.getLocale();
+});
+
 ipcMain.on("save-settings-data", (event, data) => {
   fs.writeFileSync(configName, JSON.stringify(data, null, 2));
+  
+  // If language changed, update i18n and broadcast to all windows
+  if (data.language && data.language !== i18n.getLocale()) {
+    i18n.init(data.language);
+    
+    // Broadcast language change to all windows
+    BrowserWindow.getAllWindows().forEach(window => {
+      if (!window.isDestroyed()) {
+        window.webContents.send('language-changed', data.language);
+      }
+    });
+  }
 });
 
 ipcMain.on("export-settings-data", (event, data) => {
@@ -791,8 +734,10 @@ function createSettingWindow() {
     width: 600,
     height: 800,
     webPreferences: {
-      nodeIntegration: true, // 确保启用 Node.js 集成
-      contextIsolation: false, // 如果需要，禁用上下文隔离
+      preload: path.join(__dirname, "preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
     },
   });
 
@@ -816,6 +761,16 @@ var initMenu = function (appIcon) {
     if (config) {
       labels = config.labels;
       var needUpgrade = false;
+      
+      // Load notes directory from config
+      if (config.notesDir) {
+        dirName = config.notesDir;
+      } else {
+        // Keep default but save to config
+        config.notesDir = dirName;
+        needUpgrade = true;
+      }
+      
       if (config.user_defined_file) {
         // new version
         userDefinedFiles = config.user_defined_file.split(/[,;]/);
@@ -840,35 +795,37 @@ var initMenu = function (appIcon) {
         config.template = "";
         needUpgrade = true;
       }
-      if (config.application) {
-        customizedEditorApplication = config.application;
-      } else {
-        customizedEditorApplication = "";
-        config.application = "";
+      
+      // Handle language setting
+      if (!config.language) {
+        config.language = "auto";
         needUpgrade = true;
       }
-      fs.writeFileSync(configName, JSON.stringify(config, null, 2));
+      
+      if (needUpgrade) {
+        fs.writeFileSync(configName, JSON.stringify(config, null, 2));
+      }
     }
   } catch {
-    fs.exists(configName, (exists) => {
-      if (!exists) {
-        const data = {};
-        labels =
-          "#todo weekly,#todo monthly,#note weekly,#note monthly,#meeting 7 days";
-        data.labels = labels;
-        data.writer = "md";
-        data.template = "";
-        data.user_defined_file = "";
-        data.application = "";
-        fs.writeFileSync(configName, JSON.stringify(data, null, 2));
-      }
-    });
-    console.log("parse json file fail");
+    // Config file doesn't exist or is invalid, create default config
+    if (!fs.existsSync(configName)) {
+      const data = {};
+      labels =
+        "#todo weekly,#todo monthly,#note weekly,#note monthly,#meeting 7 days";
+      data.labels = labels;
+      data.writer = "md";
+      data.template = "";
+      data.user_defined_file = "";
+      data.notesDir = dirName;
+      data.language = "auto";  // Add default language setting
+      fs.writeFileSync(configName, JSON.stringify(data, null, 2));
+    }
+    console.log("Config file created or parse failed");
   }
   var menuArr = [];
 
   menuArr.push({
-    label: "Search",
+    label: i18n.t("menu.search"),
     accelerator: "Command+S",
     click: function () {
       createSearchDialog();
@@ -880,45 +837,45 @@ var initMenu = function (appIcon) {
   menuArr.push({ type: "separator" });
 
   menuArr.push({
-    label: "@Someone",
+    label: i18n.t("menu.atSomeone"),
     accelerator: "Command+A",
     click: function () {
       generateAtSomeoneReport(30);
     },
   });
   menuArr.push({
-    label: "Today",
+    label: i18n.t("menu.today"),
     click: function () {
       openDailyFile();
     },
   });
   menuArr.push({
-    label: "Last Day",
+    label: i18n.t("menu.lastDay"),
     click: function () {
       openDailyFileLast();
     },
   });
   menuArr.push({
-    label: "Last Week",
+    label: i18n.t("menu.lastWeek"),
     click: function () {
       openLastWeekSummary();
     },
   });
   menuArr.push({
-    label: "Last Month",
+    label: i18n.t("menu.lastMonth"),
     click: function () {
       openLastMonthSummary();
     },
   });
   menuArr.push({ type: "separator" });
   menuArr.push({
-    label: "List View",
+    label: i18n.t("menu.listView"),
     click: function () {
       openListView();
     },
   });
   menuArr.push({
-    label: "Calendar View",
+    label: i18n.t("menu.calendarView"),
     click: function () {
       openCalendarView();
     },
@@ -949,11 +906,43 @@ var initMenu = function (appIcon) {
 
   menuArr.push({ type: "separator" });
   menuArr.push({
-    label: "Notes Directory",
-    accelerator: "Command+D",
-    click: function () {
-      shellOpenPath(dirName);
-    },
+    label: i18n.t("menu.notesDirectory"),
+    submenu: [
+      {
+        label: i18n.t("menu.openDirectory"),
+        accelerator: "Command+D",
+        click: function () {
+          shellOpenPath(dirName);
+        },
+      },
+      {
+        label: i18n.t("menu.changeDirectory"),
+        click: function () {
+          dialog.showOpenDialog({
+            title: i18n.t("dialog.selectNotesDirectory"),
+            properties: ["openDirectory", "createDirectory"],
+            defaultPath: dirName,
+          }).then(result => {
+            if (!result.canceled && result.filePaths.length > 0) {
+              const newDir = result.filePaths[0];
+              dirName = newDir;
+              // Update config
+              try {
+                const config = JSON.parse(fs.readFileSync(configName));
+                config.notesDir = newDir;
+                fs.writeFileSync(configName, JSON.stringify(config, null, 2));
+                // Update tray tooltip
+                if (appIcon) {
+                  appIcon.setToolTip(i18n.t("app.tooltipNotesPath", { path: newDir }));
+                }
+              } catch (err) {
+                console.error("Failed to update config:", err);
+              }
+            }
+          });
+        },
+      },
+    ],
   });
   /*
   menuArr.push(
@@ -967,7 +956,7 @@ var initMenu = function (appIcon) {
   );
   */
   menuArr.push({
-    label: "Settings...",
+    label: i18n.t("menu.settings"),
     accelerator: "Command+C",
     click: function () {
       if (!settingWindow) {
@@ -988,16 +977,35 @@ var initMenu = function (appIcon) {
 };
 
 app.on("ready", function () {
+  // Initialize i18n with config locale
+  let configLocale = "auto"; // default to auto
+  if (fs.existsSync(configName)) {
+    try {
+      const config = JSON.parse(fs.readFileSync(configName, "utf8"));
+      configLocale = config.language || "auto";
+    } catch (err) {
+      console.log("Failed to read config for locale, using auto");
+    }
+  }
+  i18n.init(configLocale);
+  
   appIcon = new Tray(iconPath);
-  appIcon.setToolTip("日志保存路径：" + dirName);
+  appIcon.setToolTip(i18n.t("app.tooltipNotesPath", { path: dirName }));
   initMenu(appIcon);
   appIcon.on("click", openDailyFile);
-  fs.watch(configName, (event, filename) => {
-    if (filename && event == "change") {
-      initMenu(appIcon);
-      console.log(`${filename}文件发生更新，更新菜单`);
-    }
-  });
+  
+  // Watch config file (after initMenu ensures it exists)
+  try {
+    fs.watch(configName, (event, filename) => {
+      if (filename && event == "change") {
+        initMenu(appIcon);
+        console.log(`${filename} has been changed, updating menu...`);
+      }
+    });
+  } catch (err) {
+    console.log("Failed to watch config file:", err);
+  }
+  
   openDailyFile();
 });
 

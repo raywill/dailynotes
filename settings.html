@@ -3,14 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Settings</title>
+    <title data-i18n="settings.title">Settings</title>
     <style>
       body {
         font-family: Arial, sans-serif;
         background-color: #f4f4f4;
+        margin: 0;
+        padding: 0;
       }
       .container {
-        max-width: 600px;
+        max-width: 800px;
         margin: auto;
         padding: 20px;
         background: white;
@@ -21,8 +23,34 @@
       h2 {
         color: #333;
       }
+      .tab-container {
+        display: flex;
+        border-bottom: 1px solid #ddd;
+        margin-bottom: 20px;
+      }
+      .tab {
+        padding: 10px 20px;
+        cursor: pointer;
+        background-color: #f1f1f1;
+        border: 1px solid #ddd;
+        border-bottom: none;
+        border-radius: 4px 4px 0 0;
+        margin-right: 5px;
+      }
+      .tab.active {
+        background-color: #fff;
+        border-bottom: 1px solid #fff;
+        margin-bottom: -1px;
+      }
+      .tab-content {
+        display: none;
+      }
+      .tab-content.active {
+        display: block;
+      }
       .section {
         margin-bottom: 20px;
+        padding: 10px;
       }
       .label-item,
       .file-item {
@@ -65,6 +93,9 @@
       .action-button-container {
         display: flex;
         justify-content: flex-end;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
       }
       textarea,
       input[type="text"] {
@@ -73,125 +104,133 @@
         border: 1px solid #ccc;
         border-radius: 4px;
       }
-      #application-section {
-        display: none;
-      }
-      #application-section select,
-      #application-section textarea,
-      #application-section input[type="text"] {
-        width: 100%;
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        margin-bottom: 10px;
-      }
-      .application-select {
-        margin-top: 10px;
-      }
       .info-text {
         color: #666;
         font-size: 0.9em;
       }
-      .toggle-button {
-        background-color: #6c757d; /* 标准灰色 */
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        padding: 8px 12px;
-        display: flex;
-        align-items: center;
+      .info-text p {
+        margin: 5px 0;
       }
-      .toggle-button:after {
-        content: " ▼"; /* 向下的指示符号 */
-        font-size: 0.8em;
-        margin-left: 5px;
+      .form-group {
+        margin-bottom: 15px;
+      }
+      .form-label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+      .language-selector {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
       }
     </style>
   </head>
   <body>
     <div class="container">
-      <h1>Settings</h1>
-
-      <div class="section" id="labels-section">
-        <h2>Labels</h2>
-        <div id="labels"></div>
-        <button onclick="addLabel()">Add Label</button>
-      </div>
-
-      <div class="section">
-        <h2>Writer</h2>
-        <div style="display: flex; align-items: center">
-          <select id="writer" style="flex: 1; margin-right: 10px">
-            <!-- 动态添加选项 -->
-          </select>
-          <input
-            type="text"
-            id="custom-writer"
-            placeholder="Custom writer"
-            style="display: none; flex: 2"
-          />
+      <h1 data-i18n="settings.title">Settings</h1>
+      
+      <div class="tab-container">
+        <div class="tab active" data-tab="general" onclick="switchTab('general')">
+          <span data-i18n="settings.tabs.general">General</span>
+        </div>
+        <div class="tab" data-tab="labels" onclick="switchTab('labels')">
+          <span data-i18n="settings.tabs.labels">Labels</span>
+        </div>
+        <div class="tab" data-tab="files" onclick="switchTab('files')">
+          <span data-i18n="settings.tabs.files">Files</span>
+        </div>
+        <div class="tab" data-tab="privacy" onclick="switchTab('privacy')">
+          <span data-i18n="settings.tabs.privacy">Privacy</span>
+        </div>
+        <div class="tab" data-tab="about" onclick="switchTab('about')">
+          <span data-i18n="settings.tabs.about">About</span>
         </div>
       </div>
-
-      <div class="section">
-        <h2>Template</h2>
-        <textarea
-          id="template"
-          rows="4"
-          placeholder="Template content goes here"
-        ></textarea>
-      </div>
-
-      <div class="section" id="files-section">
-        <h2>User Defined Files</h2>
-        <div id="files"></div>
-        <button onclick="addFile()">Add File</button>
-      </div>
-
-      <div class="section">
-        <button class="toggle-button" onclick="toggleApplication()">
-          Advanced
-        </button>
-        <div class="application-section" id="application-section">
-          <h2>Search Opener Application</h2>
-          <select id="application-select">
-            <option
-              value="/Applications/Visual Studio Code.app/Contents/MacOS/Electron"
-            >
-              /Applications/Visual Studio Code.app/Contents/MacOS/Electron
-            </option>
-            <option value="custom">Customize...</option>
-          </select>
-          <input
-            type="text"
-            id="application-custom"
-            placeholder="Customized search result viewer"
-            style="display: none"
-          />
-          <div class="info-text">
-            Specify a specific editor to open the search content, currently only
-            supporting VSCode editor.
+      
+      <div id="general-tab" class="tab-content active">
+        <div class="section">
+          <div class="form-group">
+            <label class="form-label" data-i18n="settings.general.language">Language:</label>
+            <select id="language" class="language-selector">
+              <option value="auto" data-i18n="settings.general.languageAuto">System Default</option>
+            </select>
           </div>
-          <h2>Manual Customization</h2>
+          <div class="form-group">
+            <label class="form-label" data-i18n="settings.general.writer">File Format:</label>
+            <select id="writer" style="flex: 1; margin-right: 10px">
+              <!-- 动态添加选项 -->
+            </select>
+            <input
+              type="text"
+              id="custom-writer"
+              placeholder="Custom writer"
+              style="display: none; flex: 2"
+              data-i18n="placeholder=settings.general.writerCustomize"
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="settings.general.template">Template:</label>
+            <textarea
+              id="template"
+              rows="4"
+              placeholder="Template content goes here"
+              data-i18n="placeholder=settings.general.templatePlaceholder"
+            ></textarea>
+          </div>
+        </div>
+      </div>
+      
+      <div id="labels-tab" class="tab-content">
+        <div class="section">
+          <h2 data-i18n="settings.labels.title">Report Labels</h2>
+          <p data-i18n="settings.labels.description">Configure tags and report periods</p>
+          <div id="labels"></div>
+          <button onclick="addLabel()" data-i18n="settings.labels.addLabel">Add Label</button>
+        </div>
+      </div>
+      
+      <div id="files-tab" class="tab-content">
+        <div class="section">
+          <h2 data-i18n="settings.files.title">User Defined Files</h2>
+          <p data-i18n="settings.files.description">Quick access files in menu</p>
+          <div id="files"></div>
+          <button onclick="addFile()" data-i18n="settings.files.addFile">Add File</button>
+        </div>
+      </div>
+      
+      <div id="privacy-tab" class="tab-content">
+        <div class="section">
+          <h2 data-i18n="settings.privacy.title">Privacy & Data</h2>
           <div class="info-text">
-            Customization config path:
+            <p data-i18n="settings.privacy.localOnly">✓ All notes are stored locally on your device only</p>
+            <p data-i18n="settings.privacy.noUpload">✓ No data is uploaded to any server</p>
+            <p data-i18n="settings.privacy.fullControl">✓ You have complete control over your content</p>
+          </div>
+        </div>
+      </div>
+      
+      <div id="about-tab" class="tab-content">
+        <div class="section">
+          <h2 data-i18n="settings.about.title">About</h2>
+          <div class="info-text">
+            <p data-i18n="settings.about.configLocation">Config file location:</p>
             <kbd><span id="setting-file-path"></span></kbd>
+            <div class="export-button-container" style="margin-top: 10px">
+              <button onclick="exportJson()" data-i18n="settings.about.exportConfig">Export Config</button>
+            </div>
+            <p data-i18n="settings.about.contact">WeChat: hustos | Email: hustos@gmail.com</p>
+            <p data-i18n="settings.about.version">Version: 1.10.0</p>
           </div>
-          <h2>Export Config</h2>
-          <div class="export-button-container">
-            <button onclick="exportJson()">Export</button>
-          </div>
-          <h2>Contact Author</h2>
-          <div class="info-text">Wechat: hustos / Email: hustos@gmail.com</div>
         </div>
       </div>
+      
       <div class="action-button-container">
-        <button onclick="saveJson()">Save</button>
-        <button onclick="cancel()" style="margin-left: 10px">Cancel</button>
+        <button onclick="saveJson()" data-i18n="settings.actions.save">Save</button>
+        <button onclick="cancel()" style="margin-left: 10px" data-i18n="settings.actions.cancel">Cancel</button>
       </div>
     </div>
-
     <script src="settings-script.js"></script>
   </body>
 </html>

@@ -4,3 +4,12 @@ node_modules/*
 test.js
 upload.sh
 notes
+
+# Build artifacts
+package-lock.json
+*.log
+
+# Mac App Store
+embedded.provisionprofile
+*.pkg
+*.dmg

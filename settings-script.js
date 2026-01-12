@@ -1,20 +1,48 @@
-const { ipcRenderer } = require("electron");
-const fs = require("fs");
-
 let labels = [];
 let files = [];
+let myConfigPath = "";
 
-// 监听从主进程发送的配置路径
-ipcRenderer.on("config-settings-path", (event, path) => {
+// Initialize i18n and populate language selector
+async function initializeI18n() {
+  const availableLocales = await window.electronAPI.getAvailableLocales();
+  const localeNames = await window.electronAPI.getLocaleNames();
+  
+  const languageSelect = document.getElementById('language');
+  
+  // Clear existing options except the first one (auto)
+  const firstOption = languageSelect.firstChild;
+  languageSelect.innerHTML = '';
+  languageSelect.appendChild(firstOption);
+  
+  // Add available languages
+  availableLocales.forEach(locale => {
+    const option = document.createElement('option');
+    option.value = locale;
+    option.textContent = localeNames[locale] || locale;
+    languageSelect.appendChild(option);
+  });
+}
+
+// Listen for config path from main process
+window.electronAPI.onConfigPath(async (path) => {
   console.log("Setting window: path:", path);
 
   myConfigPath = path;
-  // 尝试加载 data.json
-  try {
-    const data = fs.readFileSync(myConfigPath, "utf-8");
-    const jsonData = JSON.parse(data);
+  
+  // Initialize i18n and populate language selector
+  await initializeI18n();
+  
+  // Load config via fetch since we don't have direct fs access
+  console.log("Setting window: path:", path);
 
-    console.log(jsonData);
+  myConfigPath = path;
+  // Load config via fetch since we don't have direct fs access
+  fetch(`file://${path}`)
+    .then(response => response.text())
+    .then(data => {
+      const jsonData = JSON.parse(data);
+
+      console.log(jsonData);
 
     // 填充 labels
     jsonData.labels.split(",").forEach((label) => {
@@ -60,41 +88,81 @@ ipcRenderer.on("config-settings-path", (event, path) => {
 
     // 填充 template
     document.getElementById("template").value = jsonData.template || "";
-
-    // 填充 application
-    const applicationSelect = document.getElementById("application-select");
-    const applicationCustomInput =
-      document.getElementById("application-custom");
-    document.getElementById("application-section").style.display = "none";
-
-    if (
-      jsonData.application ===
-      "/Applications/Visual Studio Code.app/Contents/MacOS/Electron"
-    ) {
-      applicationSelect.value = jsonData.application; // 默认选中
-      applicationCustomInput.style.display = "none"; // 隐藏文本框
-    } else {
-      applicationSelect.value = "custom"; // 选择自定义
-      applicationCustomInput.value = jsonData.application || ""; // 填充自定义值
-      applicationCustomInput.style.display = "block"; // 显示文本框
+    
+    // Set language selection
+    if (jsonData.language) {
+      const languageSelect = document.getElementById('language');
+      languageSelect.value = jsonData.language;
     }
-
+    
     document.getElementById("setting-file-path").innerHTML = myConfigPath;
 
-    // 填充 user defined files
-    jsonData.user_defined_file.split(",").forEach((file) => {
-      if (file) {
-        addFile(file.trim());
-      }
+      // 填充 user defined files
+      jsonData.user_defined_file.split(",").forEach((file) => {
+        if (file) {
+          addFile(file.trim());
+        }
+      });
+    })
+    .catch(error => {
+      console.error("Error loading config:", error);
     });
-  } catch (error) {
-    console.error("Error loading data.json:", error);
-  }
 });
 
+// Update all elements with data-i18n attributes
+async function updateI18nElements() {
+  const elements = document.querySelectorAll('[data-i18n]');
+  for (const element of elements) {
+    const key = element.getAttribute('data-i18n');
+    let translation = await window.electronAPI.getTranslation(key);
+    
+    // Check if there's a placeholder attribute
+    const placeholderAttr = element.getAttribute('data-i18n-placeholder');
+    if (placeholderAttr) {
+      element.placeholder = await window.electronAPI.getTranslation(placeholderAttr);
+    } else {
+      element.textContent = translation;
+    }
+  }
+}
+
+// Tab switching functionality
+function switchTab(tabName) {
+  // Hide all tab contents
+  document.querySelectorAll('.tab-content').forEach(content => {
+    content.classList.remove('active');
+  });
+  
+  // Remove active class from all tabs
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  
+  // Show selected tab content
+  document.getElementById(`${tabName}-tab`).classList.add('active');
+  
+  // Activate selected tab
+  document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+}
+
 window.onload = async function () {
-  // todo
+  // Initialize i18n elements
+  setTimeout(updateI18nElements, 100); // Small delay to ensure DOM is loaded
 };
+
+// Add event listener for language change
+if (document.getElementById('language')) {
+  document.getElementById('language').addEventListener('change', updateI18nElements);
+}
+
+// Listen for language change from main process
+window.addEventListener('DOMContentLoaded', (event) => {
+  if (window.electronAPI && window.electronAPI.onLanguageChange) {
+    window.electronAPI.onLanguageChange((newLocale) => {
+      updateI18nElements();
+    });
+  }
+});
 
 function addLabel(existingLabel = "") {
   const labelDiv = document.createElement("div");
@@ -172,13 +240,6 @@ function getJsonData() {
       ? customWriterInput.value
       : writerSelect.value;
 
-  const applicationSelect = document.getElementById("application-select");
-  const applicationCustomInput = document.getElementById("application-custom");
-  const applicationValue =
-    applicationSelect.value === "custom"
-      ? applicationCustomInput.value
-      : applicationSelect.value;
-
   // 处理 template 内容
   let templateValue = document.getElementById("template").value;
   templateValue = templateValue.replace(/#(\S)/g, "# $1"); // 在 # 和随后的文本之间添加空格
@@ -187,8 +248,8 @@ function getJsonData() {
     labels: labelsArray,
     writer: writerValue,
     template: templateValue,
-    application: applicationValue || "", // 允许为空
     user_defined_file: filesArray,
+    language: document.getElementById('language').value,
   };
   /*
 		// test only, save to local file
@@ -208,13 +269,13 @@ function getJsonData() {
 
 function saveJson() {
   const jsonData = this.getJsonData();
-  ipcRenderer.send("save-settings-data", jsonData);
+  window.electronAPI.saveSettings(jsonData);
   window.close();
 }
 
 function exportJson() {
   const jsonData = this.getJsonData();
-  ipcRenderer.send("export-settings-data", jsonData);
+  window.electronAPI.exportSettings(jsonData);
 }
 
 function cancel() {
@@ -226,20 +287,3 @@ document.getElementById("writer").addEventListener("change", function () {
   const customWriterInput = document.getElementById("custom-writer");
   customWriterInput.style.display = this.value === "custom" ? "block" : "none";
 });
-
-// 监听 application-select 的变化
-document
-  .getElementById("application-select")
-  .addEventListener("change", function () {
-    const applicationCustomInput =
-      document.getElementById("application-custom");
-    applicationCustomInput.style.display =
-      this.value === "custom" ? "block" : "none";
-  });
-
-// 切换 Application 的显示状态
-function toggleApplication() {
-  const applicationSection = document.getElementById("application-section");
-  applicationSection.style.display =
-    applicationSection.style.display === "none" ? "block" : "none";
-}

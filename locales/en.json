@@ -1,0 +1,125 @@
+{
+  "app": {
+    "name": "DailyNotes",
+    "tooltipNotesPath": "Notes are saved at: {{path}}"
+  },
+  "menu": {
+    "search": "Search",
+    "atSomeone": "@Someone",
+    "today": "Today",
+    "lastDay": "Last Day",
+    "lastWeek": "Last Week",
+    "lastMonth": "Last Month",
+    "listView": "List View",
+    "calendarView": "Calendar View",
+    "notesDirectory": "Notes Directory...",
+    "openDirectory": "Open Directory",
+    "changeDirectory": "Change Directory...",
+    "settings": "Settings..."
+  },
+  "dialog": {
+    "selectNotesDirectory": "Select Notes Directory",
+    "directoryChanged": "Directory Changed",
+    "directoryChangedMessage": "Notes directory changed to: {{path}}",
+    "ok": "OK",
+    "saveFile": "Save file",
+    "save": "Save"
+  },
+  "settings": {
+    "title": "Settings",
+    "tabs": {
+      "general": "General",
+      "labels": "Labels",
+      "files": "Files",
+      "privacy": "Privacy",
+      "about": "About"
+    },
+    "general": {
+      "language": "Language",
+      "languageAuto": "System Default",
+      "writer": "File Format",
+      "writerCustomize": "Customize...",
+      "template": "Template",
+      "templatePlaceholder": "Template content for new notes"
+    },
+    "labels": {
+      "title": "Report Labels",
+      "description": "Configure tags and report periods",
+      "addLabel": "Add Label",
+      "labelPlaceholder": "Label (e.g. #todo)",
+      "delete": "Delete",
+      "periods": {
+        "5days": "5 days",
+        "weekly": "weekly",
+        "monthly": "monthly",
+        "quarterly": "quarterly",
+        "yearly": "yearly"
+      }
+    },
+    "files": {
+      "title": "User Defined Files",
+      "description": "Quick access files in menu",
+      "addFile": "Add File",
+      "filePlaceholder": "File Name"
+    },
+    "privacy": {
+      "title": "Privacy & Data",
+      "localOnly": "All notes are stored locally on your device only",
+      "noUpload": "No data is uploaded to any server",
+      "fullControl": "You have complete control over your content"
+    },
+    "about": {
+      "title": "About",
+      "configLocation": "Config file location:",
+      "exportConfig": "Export Config",
+      "contact": "Contact",
+      "version": "Version"
+    },
+    "actions": {
+      "save": "Save",
+      "cancel": "Cancel"
+    }
+  },
+  "search": {
+    "title": "Search",
+    "placeholder": "Enter search keywords...",
+    "searchButton": "Search",
+    "noResults": "No results found"
+  },
+  "welcome": {
+    "noteTitle": "#note Welcome to use DailyNotes",
+    "intro1": " - For those enjoy simplicity!",
+    "intro2": " - For those want complete content control!",
+    "intro3": " - Visit https://www.github.com/raywill/dailynotes for update!",
+    "todoTitle": "#todo work for today:",
+    "todo1": " - Check and respond to emails from clients and team members.",
+    "todo2": " - Attend the daily stand-up meeting with the team to discuss progress and plans.",
+    "todo3": " - Review and update the project requirements and user stories based on the feedback received.",
+    "todo4": " - Start working on implementing new features or fixing existing bugs.",
+    "todo5": " - Write and test code, and document it properly.",
+    "todo6": " - Conduct code reviews and provide feedback to other team members.",
+    "todo7": " - Attend meetings with clients to discuss project progress and gather feedback.",
+    "todo8": " - Update project management tools and trackers with the latest information.",
+    "todo9": " - Take breaks regularly to avoid burnout and ensure productivity.",
+    "todo10": " - Learn new technologies or programming languages to enhance skills and knowledge.",
+    "typoraNote": "#note Using the markdown viewer **Typora** to view weekly reports is strongly recommended!!",
+    "beginWork": "#todo Begin your work here..."
+  },
+  "report": {
+    "listViewTitle": "## Recent 180 days List View",
+    "listViewTip": "> Use 'Command + Click' to quick open the note",
+    "calendarViewTitle": "## Recent 180 days Calendar View",
+    "calendarViewTip": "> Use 'Command + Click' to quick open the note",
+    "tableHeader": "| Brief |",
+    "tableSeparator": "| ------ |"
+  },
+  "weekdays": {
+    "sunday": "Sunday",
+    "monday": "Monday",
+    "tuesday": "Tuesday",
+    "wednesday": "Wednesday",
+    "thursday": "Thursday",
+    "friday": "Friday",
+    "saturday": "Saturday"
+  }
+}

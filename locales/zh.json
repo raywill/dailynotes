@@ -1,0 +1,125 @@
+{
+  "app": {
+    "name": "DailyNotes",
+    "tooltipNotesPath": "日志保存路径：{{path}}"
+  },
+  "menu": {
+    "search": "搜索",
+    "atSomeone": "@某人",
+    "today": "今天",
+    "lastDay": "昨天",
+    "lastWeek": "上周",
+    "lastMonth": "上月",
+    "listView": "列表视图",
+    "calendarView": "日历视图",
+    "notesDirectory": "笔记目录...",
+    "openDirectory": "打开目录",
+    "changeDirectory": "更改目录...",
+    "settings": "设置..."
+  },
+  "dialog": {
+    "selectNotesDirectory": "选择笔记目录",
+    "directoryChanged": "目录已更改",
+    "directoryChangedMessage": "笔记目录已更改为：{{path}}",
+    "ok": "确定",
+    "saveFile": "保存文件",
+    "save": "保存"
+  },
+  "settings": {
+    "title": "设置",
+    "tabs": {
+      "general": "通用",
+      "labels": "标签",
+      "files": "文件",
+      "privacy": "隐私",
+      "about": "关于"
+    },
+    "general": {
+      "language": "语言",
+      "languageAuto": "跟随系统",
+      "writer": "文件格式",
+      "writerCustomize": "自定义...",
+      "template": "模板",
+      "templatePlaceholder": "新笔记的模板内容"
+    },
+    "labels": {
+      "title": "报告标签",
+      "description": "配置标签和报告周期",
+      "addLabel": "添加标签",
+      "labelPlaceholder": "标签（如 #todo）",
+      "delete": "删除",
+      "periods": {
+        "5days": "5天",
+        "weekly": "每周",
+        "monthly": "每月",
+        "quarterly": "每季度",
+        "yearly": "每年"
+      }
+    },
+    "files": {
+      "title": "自定义文件",
+      "description": "菜单中的快捷访问文件",
+      "addFile": "添加文件",
+      "filePlaceholder": "文件名"
+    },
+    "privacy": {
+      "title": "隐私与数据",
+      "localOnly": "所有笔记仅存储在您的设备本地",
+      "noUpload": "不会上传任何数据到服务器",
+      "fullControl": "您完全控制自己的内容"
+    },
+    "about": {
+      "title": "关于",
+      "configLocation": "配置文件位置：",
+      "exportConfig": "导出配置",
+      "contact": "联系方式",
+      "version": "版本"
+    },
+    "actions": {
+      "save": "保存",
+      "cancel": "取消"
+    }
+  },
+  "search": {
+    "title": "搜索",
+    "placeholder": "输入搜索关键词...",
+    "searchButton": "搜索",
+    "noResults": "未找到结果"
+  },
+  "welcome": {
+    "noteTitle": "#note 欢迎使用 DailyNotes",
+    "intro1": " - 为喜欢简约的你！",
+    "intro2": " - 为想要完全掌控内容的你！",
+    "intro3": " - 访问 https://www.github.com/raywill/dailynotes 获取更新！",
+    "todoTitle": "#todo 今日待办：",
+    "todo1": " - 查看并回复客户和团队成员的邮件。",
+    "todo2": " - 参加团队每日站会，讨论进度和计划。",
+    "todo3": " - 根据收到的反馈审查和更新项目需求和用户故事。",
+    "todo4": " - 开始实现新功能或修复现有bug。",
+    "todo5": " - 编写和测试代码，并做好文档。",
+    "todo6": " - 进行代码审查，为其他团队成员提供反馈。",
+    "todo7": " - 与客户开会讨论项目进度并收集反馈。",
+    "todo8": " - 更新项目管理工具和跟踪器的最新信息。",
+    "todo9": " - 定期休息以避免疲劳并确保工作效率。",
+    "todo10": " - 学习新技术或编程语言以提升技能和知识。",
+    "typoraNote": "#note 强烈推荐使用 markdown 查看器 **Typora** 来查看周报！！",
+    "beginWork": "#todo 从这里开始你的工作..."
+  },
+  "report": {
+    "listViewTitle": "## 最近180天列表视图",
+    "listViewTip": "> 使用 'Command + 点击' 快速打开笔记",
+    "calendarViewTitle": "## 最近180天日历视图",
+    "calendarViewTip": "> 使用 'Command + 点击' 快速打开笔记",
+    "tableHeader": "| 简述 |",
+    "tableSeparator": "| ------ |"
+  },
+  "weekdays": {
+    "sunday": "周日",
+    "monday": "周一",
+    "tuesday": "周二",
+    "wednesday": "周三",
+    "thursday": "周四",
+    "friday": "周五",
+    "saturday": "周六"
+  }
+}

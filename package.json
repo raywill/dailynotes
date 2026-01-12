@@ -1,18 +1,64 @@
 {
   "name": "DailyNotes",
-  "version": "1.10",
+  "version": "1.10.0",
   "main": "main.js",
+  "author": {
+    "name": "Ray Yu",
+    "email": "hustos@gmail.com"
+  },
+  "description": "Daily notes with unlimited capability - auto-create notes, generate reports, and organize with tags",
   "scripts": {
     "start": "electron .",
     "package": "electron-packager ./ --platform=darwin --arch=x64 --out=dist --icon=./icon.icns --overwrite --electron-version=25.1.0 --electron-zip-dir=/Users/raywill/.electron/ && asar pack dist/DailyNotes-darwin-x64/DailyNotes.app/Contents/Resources/app dist/DailyNotes-darwin-x64/DailyNotes.app/Contents/Resources/app.asar && rm -fr dist/DailyNotes-darwin-x64/DailyNotes.app/Contents/Resources/app",
     "zip": "zip -r dist/DailyNotes-darwin-x64.zip dist/DailyNotes-darwin-x64",
+    "build:mas": "electron-builder --mac mas",
+    "build:mas-dev": "electron-builder --mac mas-dev",
     "src": "open dist/DailyNotes-darwin-x64/DailyNotes.app/Contents/Resources/",
     "dest": "open /Applications/DailyNotes.app/Contents/Resources/"
   },
+  "build": {
+    "appId": "com.reactshare.dailynotes",
+    "productName": "DailyNotes",
+    "copyright": "Copyright © 2026",
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "icon.icns",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "entitlements.mas.plist",
+      "entitlementsInherit": "entitlements.mas.inherit.plist",
+      "provisioningProfile": "embedded.provisionprofile",
+      "type": "distribution"
+    },
+    "mas": {
+      "category": "public.app-category.productivity",
+      "entitlements": "entitlements.mas.plist",
+      "entitlementsInherit": "entitlements.mas.inherit.plist",
+      "hardenedRuntime": false,
+      "asarUnpack": [
+        "**/*.node"
+      ]
+    },
+    "files": [
+      "**/*",
+      "!dist/**/*",
+      "!node_modules/**/*",
+      "!package/**/*",
+      "!plugin/**/*",
+      "!.gitignore",
+      "!build.sh",
+      "!format.sh",
+      "!install.sh",
+      "!start.sh"
+    ]
+  },
   "dependencies": {
+    "electron-store": "^8.1.0"
+  },
+  "devDependencies": {
     "asar": "^3.2.0",
-    "electron-packager": "^17.1.1",
-    "electron-store": "^8.1.0",
-    "ollama": "^0.5.14"
+    "electron": "^25.1.0",
+    "electron-builder": "^24.6.4",
+    "electron-packager": "^17.1.1"
   }
 }
