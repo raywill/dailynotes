@@ -45,5 +45,13 @@ contextBridge.exposeInMainWorld("electronAPI", {
   // Language change listener
   onLanguageChange: (callback) => {
     ipcRenderer.on('language-changed', (event, newLocale) => callback(newLocale));
+  },
+  
+  // Directory operations
+  selectDirectory: async () => {
+    return await ipcRenderer.invoke('select-directory');
+  },
+  openDirectory: (dirPath) => {
+    ipcRenderer.send('open-directory', dirPath);
   }
 });

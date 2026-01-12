@@ -44,65 +44,71 @@ window.electronAPI.onConfigPath(async (path) => {
 
       console.log(jsonData);
 
-    // 填充 labels
-    jsonData.labels.split(",").forEach((label) => {
-      if (label) {
-        addLabel(label.trim());
+      // 填充 labels
+      jsonData.labels.split(",").forEach((label) => {
+        if (label) {
+          addLabel(label.trim());
+        }
+      });
+
+      // 填充 writer
+      const writerElement = document.getElementById("writer");
+      const customWriterElement = document.getElementById("custom-writer");
+
+      writerElement.innerHTML = `
+          <option value="txt">txt</option>
+          <option value="md">md</option>
+      `;
+
+      if (
+        jsonData.writer &&
+        jsonData.writer !== "txt" &&
+        jsonData.writer !== "md"
+      ) {
+        const option = document.createElement("option");
+        option.value = jsonData.writer;
+        option.textContent = jsonData.writer;
+        writerElement.appendChild(option);
+        writerElement.value = jsonData.writer; // 选中自定义类型
+      } else {
+        writerElement.value = jsonData.writer || "txt"; // 默认值为 'txt'
       }
-    });
 
-    // 填充 writer
-    const writerElement = document.getElementById("writer");
-    const customWriterElement = document.getElementById("custom-writer");
+      // 最后添加自定义选项
+      const customOption = document.createElement("option");
+      customOption.value = "custom";
+      customOption.textContent = "Customize...";
+      writerElement.appendChild(customOption);
 
-    writerElement.innerHTML = `
-				<option value="txt">txt</option>
-				<option value="md">md</option>
-		`;
+      // 显示自定义输入框
+      customWriterElement.value =
+        jsonData.writer === "custom" ? jsonData.custom_writer || "" : "";
+      customWriterElement.style.display =
+        jsonData.writer === "custom" ? "block" : "none";
 
-    if (
-      jsonData.writer &&
-      jsonData.writer !== "txt" &&
-      jsonData.writer !== "md"
-    ) {
-      const option = document.createElement("option");
-      option.value = jsonData.writer;
-      option.textContent = jsonData.writer;
-      writerElement.appendChild(option);
-      writerElement.value = jsonData.writer; // 选中自定义类型
-    } else {
-      writerElement.value = jsonData.writer || "txt"; // 默认值为 'txt'
-    }
-
-    // 最后添加自定义选项
-    const customOption = document.createElement("option");
-    customOption.value = "custom";
-    customOption.textContent = "Customize...";
-    writerElement.appendChild(customOption);
-
-    // 显示自定义输入框
-    customWriterElement.value =
-      jsonData.writer === "custom" ? jsonData.custom_writer || "" : "";
-    customWriterElement.style.display =
-      jsonData.writer === "custom" ? "block" : "none";
-
-    // 填充 template
-    document.getElementById("template").value = jsonData.template || "";
-    
-    // Set language selection
-    if (jsonData.language) {
-      const languageSelect = document.getElementById('language');
-      languageSelect.value = jsonData.language;
-    }
-    
-    document.getElementById("setting-file-path").innerHTML = myConfigPath;
-
+      // 填充 template
+      document.getElementById("template").value = jsonData.template || "";
+      
+      // Set language selection
+      if (jsonData.language) {
+        const languageSelect = document.getElementById('language');
+        languageSelect.value = jsonData.language;
+      }
+      
+      // Set notes directory
+      if (jsonData.notesDir) {
+        document.getElementById("notes-directory").value = jsonData.notesDir;
+      }
+      
+      let userDefinedFiles = jsonData.user_defined_file.split(/[,;]/).filter(item => item.trim() !== '');
       // 填充 user defined files
-      jsonData.user_defined_file.split(",").forEach((file) => {
+      userDefinedFiles.forEach((file) => {
         if (file) {
           addFile(file.trim());
         }
       });
+      // document.getElementById("setting-file-path").innerHTML = myConfigPath;
+
     })
     .catch(error => {
       console.error("Error loading config:", error);
@@ -250,6 +256,7 @@ function getJsonData() {
     template: templateValue,
     user_defined_file: filesArray,
     language: document.getElementById('language').value,
+    notesDir: document.getElementById('notes-directory').value,
   };
   /*
 		// test only, save to local file
@@ -287,3 +294,22 @@ document.getElementById("writer").addEventListener("change", function () {
   const customWriterInput = document.getElementById("custom-writer");
   customWriterInput.style.display = this.value === "custom" ? "block" : "none";
 });
+
+// 添加目录按钮事件监听器
+if (document.getElementById('browse-directory-btn')) {
+  document.getElementById('browse-directory-btn').addEventListener('click', async () => {
+    const result = await window.electronAPI.selectDirectory();
+    if (result && result.path) {
+      document.getElementById("notes-directory").value = result.path;
+    }
+  });
+}
+
+if (document.getElementById('open-directory-btn')) {
+  document.getElementById('open-directory-btn').addEventListener('click', () => {
+    const dirPath = document.getElementById("notes-directory").value;
+    if (dirPath) {
+      window.electronAPI.openDirectory(dirPath);
+    }
+  });
+}

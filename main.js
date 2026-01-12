@@ -698,6 +698,24 @@ ipcMain.handle('get-current-locale', (event) => {
   return i18n.getLocale();
 });
 
+// Directory operation APIs
+ipcMain.handle('select-directory', async () => {
+  const result = await dialog.showOpenDialog({
+    title: i18n.t("dialog.selectNotesDirectory"),
+    properties: ["openDirectory", "createDirectory"],
+    defaultPath: dirName,
+  });
+  
+  if (!result.canceled && result.filePaths.length > 0) {
+    return { path: result.filePaths[0] };
+  }
+  return null;
+});
+
+ipcMain.on('open-directory', (event, dirPath) => {
+  shell.openPath(dirPath);
+});
+
 ipcMain.on("save-settings-data", (event, data) => {
   fs.writeFileSync(configName, JSON.stringify(data, null, 2));
   
@@ -772,8 +790,12 @@ var initMenu = function (appIcon) {
       }
       
       if (config.user_defined_file) {
-        // new version
-        userDefinedFiles = config.user_defined_file.split(/[,;]/);
+        // new version - handle both string and array formats
+        if (Array.isArray(config.user_defined_file)) {
+          userDefinedFiles = config.user_defined_file;
+        } else {
+          userDefinedFiles = config.user_defined_file.split(/[,;]/).filter(item => item.trim() !== '');
+        }
       } else {
         config.user_defined_file = "";
         userDefinedFiles = [];
@@ -904,46 +926,7 @@ var initMenu = function (appIcon) {
     });
   }
 
-  menuArr.push({ type: "separator" });
-  menuArr.push({
-    label: i18n.t("menu.notesDirectory"),
-    submenu: [
-      {
-        label: i18n.t("menu.openDirectory"),
-        accelerator: "Command+D",
-        click: function () {
-          shellOpenPath(dirName);
-        },
-      },
-      {
-        label: i18n.t("menu.changeDirectory"),
-        click: function () {
-          dialog.showOpenDialog({
-            title: i18n.t("dialog.selectNotesDirectory"),
-            properties: ["openDirectory", "createDirectory"],
-            defaultPath: dirName,
-          }).then(result => {
-            if (!result.canceled && result.filePaths.length > 0) {
-              const newDir = result.filePaths[0];
-              dirName = newDir;
-              // Update config
-              try {
-                const config = JSON.parse(fs.readFileSync(configName));
-                config.notesDir = newDir;
-                fs.writeFileSync(configName, JSON.stringify(config, null, 2));
-                // Update tray tooltip
-                if (appIcon) {
-                  appIcon.setToolTip(i18n.t("app.tooltipNotesPath", { path: newDir }));
-                }
-              } catch (err) {
-                console.error("Failed to update config:", err);
-              }
-            }
-          });
-        },
-      },
-    ],
-  });
+
   /*
   menuArr.push(
     {
@@ -955,6 +938,8 @@ var initMenu = function (appIcon) {
     }
   );
   */
+ 
+  menuArr.push({ type: "separator" });
   menuArr.push({
     label: i18n.t("menu.settings"),
     accelerator: "Command+C",

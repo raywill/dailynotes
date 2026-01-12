@@ -60,7 +60,11 @@
       "title": "User Defined Files",
       "description": "Quick access files in menu",
       "addFile": "Add File",
-      "filePlaceholder": "File Name"
+      "filePlaceholder": "File Name",
+      "notesDirectory": "Notes Directory",
+      "directoryPath": "Directory Path:",
+      "browseDirectory": "Browse...",
+      "openDirectory": "Open"
     },
     "privacy": {
       "title": "Privacy & Data",
@@ -72,8 +76,8 @@
       "title": "About",
       "configLocation": "Config file location:",
       "exportConfig": "Export Config",
-      "contact": "Contact",
-      "version": "Version"
+      "contact": "Contact: hustos@gmail.com",
+      "version": "Version: 1.10.0"
     },
     "actions": {
       "save": "Save",

@@ -18,6 +18,7 @@
         background: white;
         border-radius: 8px;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        min-height: 800px;
       }
       h1,
       h2 {
@@ -44,6 +45,10 @@
       }
       .tab-content {
         display: none;
+        min-height: 500px;
+        max-height: 800px;
+        overflow-y: auto;
+        padding-right: 10px;
       }
       .tab-content.active {
         display: block;
@@ -51,6 +56,21 @@
       .section {
         margin-bottom: 20px;
         padding: 10px;
+      }
+      /* Improve scrollbar appearance */
+      .tab-content::-webkit-scrollbar {
+        width: 8px;
+      }
+      .tab-content::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+      }
+      .tab-content::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 4px;
+      }
+      .tab-content::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
       }
       .label-item,
       .file-item {
@@ -198,6 +218,18 @@
           <div id="files"></div>
           <button onclick="addFile()" data-i18n="settings.files.addFile">Add File</button>
         </div>
+        
+        <div class="section">
+          <h2 data-i18n="settings.files.notesDirectory">Notes Directory</h2>
+          <div class="form-group">
+            <label class="form-label" data-i18n="settings.files.directoryPath">Directory Path:</label>
+            <div style="display: flex; gap: 10px; margin-top: 5px;">
+              <input type="text" id="notes-directory" readonly style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
+              <button id="browse-directory-btn" data-i18n="settings.files.browseDirectory">Browse...</button>
+              <button id="open-directory-btn" data-i18n="settings.files.openDirectory">Open</button>
+            </div>
+          </div>
+        </div>
       </div>
       
       <div id="privacy-tab" class="tab-content">
@@ -215,13 +247,13 @@
         <div class="section">
           <h2 data-i18n="settings.about.title">About</h2>
           <div class="info-text">
-            <p data-i18n="settings.about.configLocation">Config file location:</p>
+            <!--p data-i18n="settings.about.configLocation">Config file location:</p>
             <kbd><span id="setting-file-path"></span></kbd>
             <div class="export-button-container" style="margin-top: 10px">
               <button onclick="exportJson()" data-i18n="settings.about.exportConfig">Export Config</button>
-            </div>
-            <p data-i18n="settings.about.contact">WeChat: hustos | Email: hustos@gmail.com</p>
-            <p data-i18n="settings.about.version">Version: 1.10.0</p>
+            </div-->
+            <p data-i18n="settings.about.contact"></p>
+            <p data-i18n="settings.about.version"></p>
           </div>
         </div>
       </div>

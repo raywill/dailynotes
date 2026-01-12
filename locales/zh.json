@@ -60,7 +60,11 @@
       "title": "自定义文件",
       "description": "菜单中的快捷访问文件",
       "addFile": "添加文件",
-      "filePlaceholder": "文件名"
+      "filePlaceholder": "文件名",
+      "notesDirectory": "笔记目录",
+      "directoryPath": "目录路径：",
+      "browseDirectory": "浏览...",
+      "openDirectory": "打开"
     },
     "privacy": {
       "title": "隐私与数据",
@@ -72,8 +76,8 @@
       "title": "关于",
       "configLocation": "配置文件位置：",
       "exportConfig": "导出配置",
-      "contact": "联系方式",
-      "version": "版本"
+      "contact": "联系方式: hustos@gmail.com",
+      "version": "版本: 1.10.0"
     },
     "actions": {
       "save": "保存",
