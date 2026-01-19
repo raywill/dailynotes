@@ -68,9 +68,9 @@
     },
     "privacy": {
       "title": "Privacy & Data",
-      "localOnly": "All notes are stored locally on your device only",
-      "noUpload": "No data is uploaded to any server",
-      "fullControl": "You have complete control over your content"
+      "localOnly": "✓ All notes are stored locally on your device only",
+      "noUpload": "✓ No data is uploaded to any server",
+      "fullControl": "✓ You have complete control over your content"
     },
     "about": {
       "title": "About",

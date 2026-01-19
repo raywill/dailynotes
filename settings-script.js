@@ -56,8 +56,8 @@ window.electronAPI.onConfigPath(async (path) => {
       const customWriterElement = document.getElementById("custom-writer");
 
       writerElement.innerHTML = `
-          <option value="txt">txt</option>
-          <option value="md">md</option>
+          <option value="txt">Plain Text</option>
+          <option value="md">Markdown</option>
       `;
 
       if (
@@ -71,7 +71,7 @@ window.electronAPI.onConfigPath(async (path) => {
         writerElement.appendChild(option);
         writerElement.value = jsonData.writer; // 选中自定义类型
       } else {
-        writerElement.value = jsonData.writer || "txt"; // 默认值为 'txt'
+        writerElement.value = jsonData.writer || "md"; // 默认值为 'md'
       }
 
       // 最后添加自定义选项
@@ -175,7 +175,9 @@ function addLabel(existingLabel = "") {
   labelDiv.className = "label-item";
 
   const nameInput = document.createElement("input");
+  nameInput.type = "text";
   nameInput.placeholder = "Label";
+  nameInput.className = "flex-1";
   nameInput.value = existingLabel.split(" ")[0] || "";
 
   const timeSelect = document.createElement("select");
@@ -190,7 +192,8 @@ function addLabel(existingLabel = "") {
   });
 
   const deleteButton = document.createElement("button");
-  deleteButton.textContent = "Delete";
+  deleteButton.textContent = "×";
+  deleteButton.className = "remove-btn";
   deleteButton.onclick = () => {
     labelDiv.remove();
   };
@@ -207,11 +210,13 @@ function addFile(existingFile = "") {
   fileDiv.className = "file-item";
 
   const fileInput = document.createElement("input");
+  fileInput.type = "text";
   fileInput.placeholder = "File Name";
   fileInput.value = existingFile || "";
 
   const deleteButton = document.createElement("button");
-  deleteButton.textContent = "Delete";
+  deleteButton.textContent = "×";
+  deleteButton.className = "remove-btn";
   deleteButton.onclick = () => {
     fileDiv.remove();
   };

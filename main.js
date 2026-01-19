@@ -902,17 +902,6 @@ var initMenu = function (appIcon) {
       openCalendarView();
     },
   });
-  /*
-  // experimental only
-  menuArr.push(
-    {
-      label: 'grep search',
-      click: function() {
-        openTerminal();
-      }
-    }
-  );
-  */
 
   if (userDefinedFiles.length > 0) {
     menuArr.push({ type: "separator" });
@@ -926,19 +915,6 @@ var initMenu = function (appIcon) {
     });
   }
 
-
-  /*
-  menuArr.push(
-    {
-      label: 'Config',
-      accelerator: 'Command+C',
-      click: function() {
-        shellOpenPath(configName);
-      }
-    }
-  );
-  */
- 
   menuArr.push({ type: "separator" });
   menuArr.push({
     label: i18n.t("menu.settings"),
@@ -952,6 +928,16 @@ var initMenu = function (appIcon) {
     },
   });
 
+  menuArr.push(
+    {
+      label: 'Config',
+      accelerator: 'Command+C',
+      click: function() {
+        shellOpenPath(configName);
+      }
+    }
+  );
+ 
   var contextMenu = Menu.buildFromTemplate(menuArr);
   appIcon.setContextMenu(contextMenu);
   //Menu.setApplicationMenu(Menu.buildFromTemplate([{label: 'Quit', selector: 'terminate:', }]))

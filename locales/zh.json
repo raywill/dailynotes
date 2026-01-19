@@ -68,9 +68,9 @@
     },
     "privacy": {
       "title": "隐私与数据",
-      "localOnly": "所有笔记仅存储在您的设备本地",
-      "noUpload": "不会上传任何数据到服务器",
-      "fullControl": "您完全控制自己的内容"
+      "localOnly": "✓ 所有笔记仅存储在您的设备本地",
+      "noUpload": "✓ 不会上传任何数据到服务器",
+      "fullControl": "✓ 您完全控制自己的内容"
     },
     "about": {
       "title": "关于",
