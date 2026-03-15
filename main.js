@@ -689,8 +689,9 @@ ipcMain.on("search-files", async (event, query) => {
 });
 
 function processContent(file, title, titleLineNum, lines, query, results) {
+  const escapedQuery = escapeRegExp(query);
   // 使用 Unicode 支持的正则表达式
-  const regex = new RegExp(`(${query})`, "giu"); // 'u' 使正则表达式支持 Unicode，'i' 使匹配不区分大小写，'g' 使匹配全局
+  const regex = new RegExp(`(${escapedQuery})`, "giu"); // 'u' 使正则表达式支持 Unicode，'i' 使匹配不区分大小写，'g' 使匹配全局
   const matches = new Set(); // 使用 Set 来去重
 
   if (regex.test(title)) {
@@ -723,6 +724,8 @@ function processContent(file, title, titleLineNum, lines, query, results) {
 }
 
 function formatResults(results, query) {
+  const escapedQuery = escapeRegExp(query);
+
   return results.map((result) => {
     const { file, title, titleLineNum, matches } = result;
 
@@ -736,7 +739,7 @@ function formatResults(results, query) {
           match.index +
           ');return false;">' +
           match.content.replace(
-            new RegExp(`(${query})`, "giu"),
+            new RegExp(`(${escapedQuery})`, "giu"),
             `<b style='color:#ea4335'>$1</b>`,
           ) +
           "</a>"
@@ -751,6 +754,10 @@ function formatResults(results, query) {
       content: formattedMatches,
     };
   });
+}
+
+function escapeRegExp(text) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 ipcMain.on("open-search-file", (event, fName, lineNo) => {
@@ -809,62 +816,73 @@ function createSettingWindow() {
   });
 }
 
+function ensureConfigFile() {
+  const defaultConfig = {
+    labels:
+      "#todo weekly,#todo monthly,#note weekly,#note monthly,#meeting 7 days",
+    writer: "md",
+    template: "",
+    user_defined_file: "",
+    application: "",
+  };
+
+  if (!fs.existsSync(configName)) {
+    fs.mkdirSync(path.dirname(configName), { recursive: true });
+    fs.writeFileSync(configName, JSON.stringify(defaultConfig, null, 2));
+    return defaultConfig;
+  }
+
+  try {
+    return JSON.parse(fs.readFileSync(configName));
+  } catch {
+    fs.writeFileSync(configName, JSON.stringify(defaultConfig, null, 2));
+    return defaultConfig;
+  }
+}
+
 var initMenu = function (appIcon) {
   var labels = "";
-  try {
-    const config = JSON.parse(fs.readFileSync(configName));
-    if (config) {
-      labels = config.labels;
-      var needUpgrade = false;
-      if (config.user_defined_file) {
-        // new version
-        userDefinedFiles = config.user_defined_file.split(/[,;]/);
-      } else {
-        config.user_defined_file = "";
-        userDefinedFiles = [];
-        needUpgrade = true;
-      }
-      if (config.writer) {
-        // new version
-        fileExtension = config.writer;
-      } else {
-        // upgrade older version
-        fileExtension = "md";
-        config.writer = "md";
-        needUpgrade = true;
-      }
-      if (config.template) {
-        newPageTemplate = config.template;
-      } else {
-        newPageTemplate = "";
-        config.template = "";
-        needUpgrade = true;
-      }
-      if (config.application) {
-        customizedEditorApplication = config.application;
-      } else {
-        customizedEditorApplication = "";
-        config.application = "";
-        needUpgrade = true;
-      }
+
+  const config = ensureConfigFile();
+  if (config) {
+    labels = config.labels;
+    var needUpgrade = false;
+    if (config.user_defined_file) {
+      // new version
+      userDefinedFiles = config.user_defined_file.split(/[,;]/);
+    } else {
+      config.user_defined_file = "";
+      userDefinedFiles = [];
+      needUpgrade = true;
+    }
+    if (config.writer) {
+      // new version
+      fileExtension = config.writer;
+    } else {
+      // upgrade older version
+      fileExtension = "md";
+      config.writer = "md";
+      needUpgrade = true;
+    }
+    if (config.template) {
+      newPageTemplate = config.template;
+    } else {
+      newPageTemplate = "";
+      config.template = "";
+      needUpgrade = true;
+    }
+    if (config.application) {
+      customizedEditorApplication = config.application;
+    } else {
+      customizedEditorApplication = "";
+      config.application = "";
+      needUpgrade = true;
+    }
+    if (needUpgrade) {
       fs.writeFileSync(configName, JSON.stringify(config, null, 2));
     }
-  } catch {
-    fs.exists(configName, (exists) => {
-      if (!exists) {
-        const data = {};
-        labels =
-          "#todo weekly,#todo monthly,#note weekly,#note monthly,#meeting 7 days";
-        data.labels = labels;
-        data.writer = "md";
-        data.template = "";
-        data.user_defined_file = "";
-        data.application = "";
-        fs.writeFileSync(configName, JSON.stringify(data, null, 2));
-      }
-    });
-    console.log("parse json file fail");
   }
+
   var menuArr = [];
 
   menuArr.push({
@@ -992,12 +1010,16 @@ app.on("ready", function () {
   appIcon.setToolTip("日志保存路径：" + dirName);
   initMenu(appIcon);
   appIcon.on("click", openDailyFile);
-  fs.watch(configName, (event, filename) => {
-    if (filename && event == "change") {
-      initMenu(appIcon);
-      console.log(`${filename}文件发生更新，更新菜单`);
-    }
-  });
+
+  if (fs.existsSync(configName)) {
+    fs.watch(configName, (event, filename) => {
+      if (filename && event == "change") {
+        initMenu(appIcon);
+        console.log(`${filename}文件发生更新，更新菜单`);
+      }
+    });
+  }
+
   openDailyFile();
 });
 
